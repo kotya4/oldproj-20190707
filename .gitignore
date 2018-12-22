@@ -1,0 +1,4 @@
+/_sublime/
+/content-*/
+*.pyc
+SECURE_*
