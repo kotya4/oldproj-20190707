@@ -1,422 +1,410 @@
-window.addEventListener('load', () => {
 
-  const canvas = canvas_init(); // визуализация
-  const canv_vis_x = canvas_init(); // визуализация вариантов
+function onload() {
+  const rand = Randomizer.xorshift128plus(13);
+  
 
-  let x = // примеры
-  [
-    [60.000,  77.333, 0.300, 20.000],
-    [56.000,  97.733, 1.000,  4.000],
-    [89.000,  72.533, 1.500,  7.000],
-    [81.000,  65.333, 0.860, 16.000],
-    [64.000,  30.533, 0.600, 19.000],
-    [83.000,  41.333, 0.700, 18.000],
-    [10.000, 107.333, 0.550, 17.000],
-    [67.000,  96.533, 1.690, 11.000],
-    [98.000,   5.333, 1.230,  3.000],
-    [89.000,  79.733, 1.140, 14.000],
-    [56.000,   8.933, 0.350,  5.000],
-    [60.000,  73.733, 0.490, 14.000]
+  const grad3 = [
+    [+1,+1,+0], [-1,+1,+0], [+1,-1,+0], [-1,-1,+0],
+    [+1,+0,+1], [-1,+0,+1], [+1,+0,-1], [-1,+0,-1],
+    [+0,+1,+1], [+0,-1,+1], [+0,+1,-1], [+0,-1,-1]
   ];
-  const M = x[0].length; // количетсво входов (нейронов)
-  const K = 4;           // количество выходов (кластеров)
-  const N = M * K;       // кол-во вес. коэф.
-  let V = 0.78;          // начальная скорость обучения (0.28)
-  const dV = 0.90;       // множитель скорости обучения (0.90)
-  const epoch_num = 20;   // количество эпох (2)
-  const ve_speed = 400;  // скорость визуализации эпохи
-  const vi_speed = 0;  // скорость визуализации итерации
-  const w = initialize_weights(K, M); // случайные веса
-  
-  html_print_matrix(w, 's', 'w');
-  html_print_text('случайные веса:');
-  html_print_matrix(x, 'x', 'знч_');
-  html_print_text('примеры:');
 
-  x = normalize(x);                   // нормализованные значения примеров
-  
-  html_print_matrix(x, 'x', 'знч_');
-  html_print_text('нормализованные значения примеров:');
-  
-  /*
-   * ОБУЧЕНИЕ (ПО НАЖАТИЮ КЛАВИШИ)
-   */
-  const start = function() {
-    window.removeEventListener('keypress', start);
+  const perm = [
+    151,160,137,91,90,15,
+    131,13,201,95,96,53,194,233,7,225,140,36,103,30,69,142,8,99,37,240,21,10,23,
+    190, 6,148,247,120,234,75,0,26,197,62,94,252,219,203,117,35,11,32,57,177,33,
+    88,237,149,56,87,174,20,125,136,171,168, 68,175,74,165,71,134,139,48,27,166,
+    77,146,158,231,83,111,229,122,60,211,133,230,220,105,92,41,55,46,245,40,244,
+    102,143,54, 65,25,63,161, 1,216,80,73,209,76,132,187,208, 89,18,169,200,196,
+    135,130,116,188,159,86,164,100,109,198,173,186, 3,64,52,217,226,250,124,123,
+    5,202,38,147,118,126,255,82,85,212,207,206,59,227,47,16,58,17,182,189,28,42,
+    223,183,170,213,119,248,152, 2,44,154,163, 70,221,153,101,155,167, 43,172,9,
+    129,22,39,253, 19,98,108,110,79,113,224,232,178,185, 112,104,218,246,97,228,
+    251,34,242,193,238,210,144,12,191,179,162,241, 81,51,145,235,249,14,239,107,
+    49,192,214, 31,181,199,106,157,184, 84,204,176,115,121,50,45,127, 4,150,254,
+    138,236,205,93,222,114,67,29,24,72,243,141,128,195,78,66,215,61,156,180
+  ];
 
-    html_print_text('<br>^^^ ПЕРИОД ОБУЧЕНИЯ ^^^<br>');
+  // To remove the need for index wrapping, double the permutation table length
+  //const perm = [...Array(256)].map((e,i) => p[i & 255]);
+  //console.log(perm);
 
-    // "q" -- текущая эпоха
-    slow_for(epoch_num, ve_speed, q => {
-      const real_i = []; // индексы для случ. знач
-      const rx = randomize_variants(x, real_i); // случайно-распределенные примеры
+
+  function mix(a, b, t) {
+    return (1 - t) * a + t * b;
+  }
+
+  function fade(t) {
+    return t * t * t * (t * (t * 6 - 15) + 10);
+  }
+
+  function noise(x, y, z) {
+    // Find unit grid cell containing point
+    let X = Math.floor(x);
+    let Y = Math.floor(y);
+    let Z = Math.floor(z);
+
+    // Get relative xyz coordinates of point within that cell
+    x = x - X;
+    y = y - Y;
+    z = z - Z;
+
+    // Wrap the integer cells at 255 (smaller integer period can be introduced here)
+    X = X & 255;
+    Y = Y & 255;
+    Z = Z & 255;
+
+    // Calculate a set of eight hashed gradient indices
+    //const pln = p.length;
+    const dim = 12; //grad3.length * grad3[0].length;
+    // The gradients of each corner
+    let gi000 = perm[(X + 0 + perm[(Y + 0 + perm[(Z + 0) & 255]) & 255]) & 255] % dim;
+    let gi001 = perm[(X + 0 + perm[(Y + 0 + perm[(Z + 1) & 255]) & 255]) & 255] % dim;
+    let gi010 = perm[(X + 0 + perm[(Y + 1 + perm[(Z + 0) & 255]) & 255]) & 255] % dim;
+    let gi011 = perm[(X + 0 + perm[(Y + 1 + perm[(Z + 1) & 255]) & 255]) & 255] % dim;
+    let gi100 = perm[(X + 1 + perm[(Y + 0 + perm[(Z + 0) & 255]) & 255]) & 255] % dim;
+    let gi101 = perm[(X + 1 + perm[(Y + 0 + perm[(Z + 1) & 255]) & 255]) & 255] % dim;
+    let gi110 = perm[(X + 1 + perm[(Y + 1 + perm[(Z + 0) & 255]) & 255]) & 255] % dim;
+    let gi111 = perm[(X + 1 + perm[(Y + 1 + perm[(Z + 1) & 255]) & 255]) & 255] % dim;
+
+    function dot(g, x, y, z) {
+      return g[0] * x + g[1] * y + g[2] * z;
       
-      html_print_text('ЭПОХА ' + q + ' (скорость обучения: ' + round(V) + ') >>><br>');
+    }
 
-      // "rxi" -- индекс текущего случайно-распределенного примера
-      return slow_for(rx.length, vi_speed, rxi => {
-        const R = calculate_distances(rx[rxi], w);  // расстояния до центра класстеров
-        const J = get_index_of_min(R);              // индекс нейрона-победителя
-        w[J] = adjust_weights(w[J], rx[rxi], V);    // скорректированные веса нейрона-победителя
+    /*
+    for (let i = 0; i < 8; ++i) {
+      let n = i.toString(2);
+      n = [...Array(3 - n.length)].map(e => '0').join('') + n;
+      eval('console.log(grad3[gi' + n + '])');
+    }
+    throw new Error();
+    */
 
-        html_print_array(rx[rxi], 'знч_');
-        html_print_array(R, 'R');
-        html_print_array(w[J], 'w ' + J + ':');
-        html_print_text('случайный пример (x' + real_i[rxi] + ', порядковый:' + rxi + ') -->');
+    // Calculate noise contributions from each of the eight corners
+    let n000 = dot(grad3[gi000], x - 0, y - 0, z - 0);
+    let n001 = dot(grad3[gi001], x - 0, y - 0, z - 1);
+    let n010 = dot(grad3[gi010], x - 0, y - 1, z - 0);
+    let n011 = dot(grad3[gi011], x - 0, y - 1, z - 1);
+    let n100 = dot(grad3[gi100], x - 1, y - 0, z - 0);
+    let n101 = dot(grad3[gi101], x - 1, y - 0, z - 1);
+    let n110 = dot(grad3[gi110], x - 1, y - 1, z - 0);
+    let n111 = dot(grad3[gi111], x - 1, y - 1, z - 1);
+    
+    // Compute the fade curve value for each of x, y, z
+    let u = fade(x);
+    let v = fade(y);
+    let w = fade(z);
+    
+    // Interpolate along x the contributions from each of the corners
+    let nx00 = mix(n000, n100, u);
+    let nx01 = mix(n001, n101, u);
+    let nx10 = mix(n010, n110, u);
+    let nx11 = mix(n011, n111, u);
+    
 
-        // ------------ ВИЗУАЛИЗАЦИЯ КЛАСТЕРИЗАЦИИ --------------
-        const { R_matrix, R_mins } = clusterize(w, x);
-        canvas_visualize(R_mins, real_i[rxi], q);
 
-      }).then(() => V *= dV); // уменьшение скорости обучения
-    }).then(() => {
-      /*
-       * КЛАСТЕРИЗАЦИЯ
-       * ПРИМЕР КЛАСТЕРИЗАЦИИ ПО БЛИЖАЙШЕМУ ЗНАЧЕНИЮ
-       */
-      const { R_matrix, R_mins } = clusterize(w, x);
-      canvas_visualize(R_mins, '--', '--');
+    // Interpolate the four results along y
+    let nxy0 = mix(nx00, nx10, v);
+    let nxy1 = mix(nx01, nx11, v);
+    /*
+    console.log(nx00);
+    console.log(nx01);
+    console.log(nx10);
+    console.log(nx11);
+    console.log(nxy0);
+    console.log(nxy1);
+    throw new Error();
+    */
+    // Interpolate the two last results along z
+    let nxyz = mix(nxy0, nxy1, w);
 
-      html_print_text('^^^ ПЕРИОД КЛАСТЕРИЗАЦИИ ^^^<br>');
-      html_print_matrix(R_matrix, 'w', 'x');
-      html_print_objects_array(R_mins, 'x', true);
-      html_print_text('x -- пример');
-      html_print_text('C -- индекс кластера/нейрона (w)');
-      html_print_text('R -- расстояние до центра');
-      html_print_text('индексы нейронов после кластеризации вариантов -->');
-      html_print_text('матрица расстояний [нейрон(w), пример(x)]:');
-    });
-  };
+    return nxyz;
+  }
 
-  window.addEventListener('keypress', start);
-
+  
   /*
-   * Ф-ЦИИ
-   */
-
-  // медленный цикл
-  function slow_for(range, delay, callback) {
-    if ('number' === typeof range)
-      range = [...Array(range)].map((e,i) => i);
-    else if (!range || 'function' !== typeof range[Symbol.iterator])
-      throw Error('first argument has to be iterable or number');
-
-    if ('function' !== typeof callback)
-      throw Error('third argument has to be function');  
-
-    return new Promise(res => {
-      let i = 0;
-      let clock = -1;
-      function func() {
-        if (i < range.length) {
-          const cb = callback(range[i]);
-          ++i;
-          if (void 0 !== cb && 'then' in cb) {
-            clearInterval(clock);
-            cb.then(() => {
-              clock = setInterval(func, delay);
-            });
-          }
-          return;
-        }  
-        clearInterval(clock);
-        res();
-      }
-      clock = setInterval(func, delay);
-    });
-  }
-
-  // возвращает минимальное значение из массива "а"
-  function min(a) {
-    let v = a[0];
-    for (let i = 1; i < a.length; ++i)
-      if (v > a[i])
-        v = a[i];
-    return v;
-  }
-
-  // возвращает максимальное значение из массива "а"
-  function max(a) {
-    let v = a[0];
-    for (let i = 1; i < a.length; ++i)
-      if (v < a[i])
-        v = a[i];
-    return v;
-  }
-
-  // округляет до указанного количетсва знаков после запятой
-  function round(v, n = 2) {
-    const d = Math.pow(10, n);
-    return (v * d | 0) / d;
-  }
-
-  // возвращает нормализованную матрицу "m"
-  function normalize(m) {
-    const x = [...Array(m.length)].map(e => [...Array(m[0].length)].map(e => 0));
-    for (let i = 0; i < m[0].length; ++i) {
-      let min_m = m[0][i];
-      let max_m = m[0][i];  
-      for (let k = 1; k < m.length; ++k) {
-        if (min_m > m[k][i]) min_m = m[k][i];
-        if (max_m < m[k][i]) max_m = m[k][i];
-      }
-      for (let k = 0; k < m.length; ++k) {
-        x[k][i] = round( (m[k][i] - min_m) / (max_m - min_m) );
-      }
-    }
-    return x;
-  }
-
-  // инициализирует веса для матрицы "w" (случайные значения)
-  function initialize_weights(K, M) {
-    const mpw = Math.pow(M, -0.5);
-    const rou = Math.pow(10, 2);
-    const min = (0.5 - mpw) * rou | 0;
-    const max = (0.5 + mpw) * rou | 0;
-    return [...Array(K)].map((_,j) => [...Array(M)].map((_,i) =>
-      ( min + Math.random() * (max - min) | 0 ) / rou
-    ));
-  }
-
-  // возвращает матрицу случайно-распределенных примеров
-  function randomize_variants(x, real_i_ptr) {
-    const vars = [...Array(x.length)].map((e,i) => i);
-    const r = [];
-    for (let savemefromreboot = 0xffff; --savemefromreboot && vars.length; ) {
-      const i = vars.splice(Math.random() * vars.length | 0, 1);
-      real_i_ptr.push(i);
-      r.push( x[i] );
-    }
-    return r;
-  }
-
-  // рассчитывает расстояние до кластера
-  function calculate_distance_to_cluster(x, w0) {
-    let sum = 0;
-      for (let i = 0; i < x.length; ++i)
-        sum += x[i] - w0[i];
-      return Math.sqrt( Math.pow(sum, 2) );
-  }
-
-  // рассчитывает расстояния до центра для всех класстеров
-  function calculate_distances(x, w) {
-    const R = [];
-    for (let j = 0; j < w.length; ++j) {
-      R.push( round(calculate_distance_to_cluster(x, w[j]), 3) );
-    }
-    return R;
-  }
-
-  // возвращает индекс наименьшего значения из массива
-  function get_index_of_min(a) {
-    let k = 0;
-    let v = a[k];
-    for (let i = 1; i < a.length; ++i)
-      if (v > a[i])
-        v = a[(k = i)];
-    return k;
-  }
-
-  // корректирует вес нейрона
-  function adjust_weights(w, x, V) {
-    const W = [];
-    for (let i = 0; i < x.length; ++i)
-      W.push( round( w[i] + V * (x[i] - w[i]) ) );
-    return W;
-  }
-
-  // кластеризация данных (возвращает матрицу всез расстояний и матрицу кластеров)
-  function clusterize(w, x) {
-    // матрица расстояний для каждого нейрона для каждого варианта
-    const R_matrix = [...Array(w.length)].map(e => [...Array(x.length)].map(e => 0));
-    // "k" -- индекс текущего нейрона
-    for (let k = 0; k < w.length; ++k) {
-      // "i" -- индекс текущего примера
-      for (let i = 0; i < x.length; ++i) {
-        const Rk = calculate_distance_to_cluster(x[i], w[k]); // расстояние до центра текущего кластера
-        R_matrix[k][i] = (Rk * 100 | 0) / 100;
+  const canvas = document.createElement('canvas');
+  document.body.appendChild(canvas);
+  canvas.width = 600;
+  canvas.height = 400;
+  const ctx = canvas.getContext('2d');
+  ctx.fillStyle = 'lightgrey';
+  ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+  
+  let x1 = 0;
+  let xx = 2;
+  const iid = setInterval(() => {
+    xx += 1;
+    //x1 += 1;
+    for (let x = 0; x < 256; ++x) {
+      for (let y = 0; y < 256; ++y) {
+        const c = noise((x + x1) / xx, y / xx, 0) * 250;
+        ctx.fillStyle = `rgb(${c},${c},${c})`;
+        ctx.fillRect(x * 1, y * 1, 1, 1);
       }
     }
 
-    // массив, содержащий минимальное расстояние и индекс примера
-    // (индекс элемента массива является также индексом варианта)
-    const R_mins = [];
-    for (let i = 0; i < R_matrix[0].length; ++i) {
-      let R_min = { // буффер, в конце нижеидущего цикла будет хранить:
-        C: -1, // индекс кластера из массива w
-        R: 0xffff // расстояние до центра (минимальное для текущего нейрона)
-      };
-      for (let k = 0; k < R_matrix.length; ++k) {
-        // при равных расстояниях вносится первое вхождение
-        if (R_min.R > R_matrix[k][i]) {
-          R_min.R = R_matrix[k][i];
-          R_min.C = k;
-        }
-      }
-      R_mins.push(R_min);
-    }
+    ctx.fillStyle = 'grey';
+    ctx.fillRect(380, 190, 50, 50);
+    ctx.fillStyle = 'black';
+    ctx.fillText(xx, 400, 200);
 
-    return { R_matrix, R_mins };
-  }
-
-  /*
-  * Ф-ЦИИ, ОБЕСПЕЧИВАЮЩИЕ ВЫВОД ДАННЫХ НА ЭКРАН
+  }, 200);
   */
 
-  function html_print_matrix(m, col_name = '', row_name = '') {
-    const tw = document.getElementById('text-wrapper');
-    let o = '<table><tr><td></td>';  
-    for (let x = 0; x < m[0].length; ++x) o += '<td>' + row_name + x + '</td>';
-    o += '</tr>';
-    m.forEach((e,y) => {
-      o += '<tr><td>' + col_name + y + '</td>';
-      e.forEach(e => o += '<td>' + e + '</td>');
-      o += '</tr>';
-    });
-    o += '</table><br>';
-    tw.innerHTML = o + tw.innerHTML;
+  /*
+  ctx.fillStyle = 'white';
+  const s = 256;
+  for (let i = 0; i < 1; i += 1 / s) {
+    ctx.fillRect(i * s, fade(i), 1, 1);
   }
+  */
 
-  function html_print_array(a, row_name = '', vertical = false) {
-    const tw = document.getElementById('text-wrapper');
-    let o = '<table><tr>';
-    if (!vertical) {
-      for (let x = 0; x < a.length; ++x) o += '<td>' + row_name + x + '</td>';
-      o += '</tr><tr>';
-      a.forEach(e => o += '<td>' + e + '</td>');
-      o += '</tr></table><br>';
-    } else {
-      a.forEach((e,x) => o += '<tr><td>'+row_name + x +'</td>' + '<td>' + e + '</td></tr>');
-    }
-    tw.innerHTML = o + tw.innerHTML;
-  }
 
-  function html_print_objects_array(a, row_name = '', vertical = false) {
-    function parse_obj(o) {
-      let vals = '';
-      for (let k in o) {
-        vals += k + ':' + o[k] + ', ';
-      }
-      return vals.substr(0, vals.length - 2);
-    }
-    const tw = document.getElementById('text-wrapper');
-    let o = '<table><tr>';
-    if (!vertical) {
-      for (let x = 0; x < a.length; ++x) o += '<td>' + row_name + x + '</td>';
-      o += '</tr><tr>';
-      a.forEach(e => o += '<td>' + parse_obj(e) + '</td>');
-      o += '</tr></table><br>';
-    } else {
-      a.forEach((e,x) => o += '<tr><td>'+row_name + x +'</td>' + '<td>' + parse_obj(e) + '</td></tr>');
-    }
-    tw.innerHTML = o + tw.innerHTML;
-  }
-
-  function html_print_text(text = '') {
-    const tw = document.getElementById('text-wrapper');
-    const o = text + '<br>';
-    tw.innerHTML = o + tw.innerHTML;
-  }
-
-  function canvas_init() {
-    const cv = document.getElementById('canvas');
-    const ctx = cv.getContext('2d');
-    return { ctx, data: [] };
-  }
-
-  function canvas_store_data(c, w, q, rxi) {
-    c.data.push({ w: w.map(e => e.slice()), q, rxi });
-  }
-
-  function canvas_draw_neurons(c) {
-    const delay_before_restart = 0;
-    const delay_for_each_iteration = 200;
-    const ctx = c.ctx;
-    let ww = 0;
-    let id = 0;
-    const dx = ctx.canvas.width / x.length | 0;
-    const dy = ctx.canvas.height / x[0].length | 0;
-    ctx.font = '12px Courier New, Courier, monospace';
-    function draw(){
-      for (let i = 0; i < x.length; ++i) {
-        let ni = R_mins[i].C;
-        let wi = c.data[ww].w[ni];
-        for (let k = 0; k < x[0].length; ++k) {
-          ctx.fillStyle = `rgba(${256*wi[0]},${256*wi[1]},${256*wi[2]},${1})`;
-          ctx.fillRect(k * dy, i * dx, dy - 1, dx - 1);
+  function matmul(a, b) {
+    if (void 0 === a) return b;
+    const m = [];
+    for (let r = 0; r < a.length; ++r) {
+      m.push([]);
+      for (let c = 0; c < b[0].length; ++c) {
+        m[r].push(0);
+        for (let i = 0; i < a[0].length; ++i) {
+          m[r][c] += a[r][i] * b[i][c];
         }
       }
-      ctx.fillStyle = 'black';
-      ctx.fillText('эпоха :'+c.data[ww].q,5,10);
-      ctx.fillText('пример:'+c.data[ww].rxi,5,20);
-      if (++ww >= c.data.length) {
-        clearInterval(id);
-        setTimeout(() => {
-          ww = 0;
-          id = setInterval(draw, delay_for_each_iteration);
-        }, delay_before_restart);
+    }
+    return m;
+  }
+
+  function toFloat32Array(m) {
+    const a = new Float32Array(m.length * m[0].length);
+    for (let y = 0; y < m.length; ++y)
+      for (let x = 0; x < m[0].length; ++x)
+        a[x + y * m[0].length] = m[y][x];
+    return a;
+  }
+
+
+  /*======= Creating a canvas =========*/
+
+  const canvas = document.createElement('canvas');
+  document.body.appendChild(canvas);
+  canvas.width = 600;
+  canvas.height = 400;
+  var gl = canvas.getContext('experimental-webgl');
+
+  /*======= Defining and storing the geometry ======*/
+  
+
+  const fov = 45 * Math.PI / 180;
+  const pm11 = 1 / Math.tan(fov / 2);
+  const pm00 = canvas.height / canvas.width * pm11;
+  const zfar = 100;
+  const znear = 0.1;
+  const pm22 = zfar / (zfar - znear);
+  const pm32 = pm22 * (-znear);
+
+  const projection_raw = [
+    [pm00, 0, 0, 0],
+    [0, pm11, 0, 0],
+    [0, 0, pm22, 1],
+    [0, 0, pm32, 0],
+  ];
+
+  const rotx = -1 * Math.PI / 180;
+  const sinx = Math.sin(rotx);
+  const cosx = Math.cos(rotx);
+
+  const rotation_raw = [
+    [1, 0, 0, 0],
+    [0, +cosx, -sinx, 0],
+    [0, +sinx, +cosx, 0],
+    [0, 0, 0, 1],
+  ];
+
+  const translation_raw = [
+    [1, 0, 0, 0],
+    [0, 1, 0, 0],
+    [0, 0, 10, 0],
+    [0, 0, 0, 1],
+  ];
+
+  const translation = [
+    [1, 0, 0, 0],
+    [0, 1, 0, 0],
+    [0, 0, 1, 5],
+    [0, 0, 0, 1],
+  ];
+
+  let matrix = [
+    [1,0,0,0],
+    [0,1,0,0],
+    [0,0,1,0],
+    [0,0,0,1]
+  ];
+  //matrix = matmul(matrix, translation_raw);
+  //matrix = matmul(matrix, rotation_raw);
+  matrix = matmul(matrix, projection_raw);
+  matrix = matmul(matrix, [
+    [1, 0, 0, 0],
+    [0, 1, 0, 0],
+    [0, 0, 1, 5],
+    [0, 0, 0, 1],
+  ]);
+  //matrix = matmul(matrix, translation);
+
+
+  const projection = toFloat32Array(matrix);
+
+  console.log(projection);
+
+
+  const grid = {
+    width: 10,
+    height: 10
+  };
+
+
+  
+
+  /*=================== Shaders ====================*/
+
+  var vertCode = `
+attribute vec3 a_position;
+uniform mat4 u_projection;
+void main(void) {
+  gl_Position = u_projection * vec4(a_position, 1.0);
+}`;
+  var vertShader = gl.createShader(gl.VERTEX_SHADER);
+  gl.shaderSource(vertShader, vertCode);
+  gl.compileShader(vertShader);
+
+  var fragCode = `
+void main(void) {
+  gl_FragColor = vec4(0.0, 0.0, 0.0, 0.1);
+}`;
+  var fragShader = gl.createShader(gl.FRAGMENT_SHADER);
+  gl.shaderSource(fragShader, fragCode);
+  gl.compileShader(fragShader);
+  
+  var shaderProgram = gl.createProgram();
+  gl.attachShader(shaderProgram, vertShader);
+  gl.attachShader(shaderProgram, fragShader);
+  gl.linkProgram(shaderProgram);
+  gl.useProgram(shaderProgram);
+
+  /*======= Associating shaders to buffer objects ======*/
+
+  // Bind vertex buffer object
+  var vertex_buffer = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, vertex_buffer);
+  //gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
+  //gl.bindBuffer(gl.ARRAY_BUFFER, null);
+  //gl.bindBuffer(gl.ARRAY_BUFFER, vertex_buffer);
+
+
+  var a_position = gl.getAttribLocation(shaderProgram, 'a_position');
+  var u_projection = gl.getUniformLocation(shaderProgram, 'u_projection');
+
+  gl.vertexAttribPointer(a_position, 3, gl.FLOAT, false, 0, 0);
+  gl.enableVertexAttribArray(a_position);
+
+  /*============ Drawing the triangle =============*/
+
+  // Clear the canvas
+  gl.clearColor(0.5, 0.5, 0.5, 0.9);
+
+  // Enable the depth test
+  gl.enable(gl.DEPTH_TEST);
+
+  gl.viewport(0,0, canvas.width, canvas.height);
+  gl.uniformMatrix4fv(u_projection, false, projection);
+
+  const vertices = new Float32Array(grid.width * grid.height * 3 * 6 + grid.width * 3 * 2);
+  console.log(vertices.length);
+  //setInterval(() => {
+    
+    let i = 0;
+    for (let y = 0; y < grid.height; ++y) {
+      for (let x = 0; x < grid.width + 1; ++x) {
+        const pos = [
+          (-1.0 + (x + 0) / grid.width * 2),
+          (+1.0 - (y + 0) / grid.height * 2),
+          1.0,
+
+          (-1.0 + (x + 0) / grid.width * 2),
+          (+1.0 - (y + 1) / grid.height * 2),
+          1.0,
+
+          (-1.0 + (x + 1) / grid.width * 2),
+          (+1.0 - (y + 0) / grid.height * 2),
+          1.0
+        ];
+        vertices[i + 0] = pos[0];
+        vertices[i + 1] = pos[1];
+        vertices[i + 2] = pos[2];
+        i += 3;
+        vertices[i + 0] = pos[3];
+        vertices[i + 1] = pos[4];
+        vertices[i + 2] = pos[5];
+        i += 3;
+        if (x === grid.width) continue;
+        vertices[i + 0] = pos[3];
+        vertices[i + 1] = pos[4];
+        vertices[i + 2] = pos[5];
+        i += 3;
+        vertices[i + 0] = pos[6];
+        vertices[i + 1] = pos[7];
+        vertices[i + 2] = pos[8];
+        i += 3;
+        vertices[i + 0] = pos[6];
+        vertices[i + 1] = pos[7];
+        vertices[i + 2] = pos[8];
+        i += 3;
+        vertices[i + 0] = pos[0];
+        vertices[i + 1] = pos[1];
+        vertices[i + 2] = pos[2];
+        i += 3;
       }
     }
-    id = setInterval(draw, delay_for_each_iteration);
+    
+
+    //console.log(i);
+    gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
+
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+    gl.drawArrays(gl.LINES, 0, (vertices.length / 3 | 0));
+  //}, 500);
+
+  // POINTS, LINE_STRIP, LINE_LOOP, LINES,
+  // TRIANGLE_STRIP,TRIANGLE_FAN, TRIANGLES
+
+
+
+
+
+}
+
+/*
+ *
+ */
+((path, a) => {
+  function loadjs(src, async = true) {
+    return new Promise((res, rej) => 
+      document.head.appendChild(Object.assign(document.createElement('script'), {
+        src,
+        async,
+        onload: _ => { res(src) },
+        onerror: _ => { rej(src) }
+      }))
+    )
   }
-
-  function canvas_visualize(mins, xind, epoch) {
-    const ctx = canv_vis_x.ctx;
-    const _w = ctx.canvas.width;
-    const _h = ctx.canvas.height;
-    const _wo = 150;
-    const _ho = 50;
-    ctx.fillStyle = 'white';
-    ctx.fillRect(0, 0, _w, _h);
-    ctx.fillStyle = '#ddd';
-    ctx.fillRect(_wo / 2, _ho / 2, _w - _wo, _h - _ho);
-    ctx.font = '12px "Courier New", Courier, monospace';
-    const rad = 1;
-    const rmx = 16;
-
-    function draw_ellipse(x, y, r, c = 'white', s = false) {
-      s ? ctx.strokeStyle = c : ctx.fillStyle = c;
-      ctx.beginPath();
-      ctx.ellipse(x, y, r * 2, r * 2, 0, 0, Math.PI * 2);
-      s ? ctx.stroke() : ctx.fill();
-    }
-
-    const colors = [
-      'blue',
-      'yellow',
-      'black',
-      'orange'
-    ];
-
-    for (let i = 0; i < x.length; ++i) {
-      const _x = x[i][1] * (_w - _wo) + _wo / 2;
-      const _y = x[i][2] * (_h - _ho) + _ho / 2;
-      const _z = x[i][0] * 255;
-      const _t = x[i][3] * 255;
-
-      const c0 = colors[mins[i].C];
-      const c1 = `rgb(255, ${_z}, ${_z})`;
-      const c2 = `rgb(${_t}, 255, ${_t})`;
-      
-      draw_ellipse(_x, _y, rad + 0, c0, false);
-      draw_ellipse(_x, _y, rad + 2, c1, true);
-      draw_ellipse(_x, _y, rad + 4, c2, true);
-
-      ctx.fillStyle = 'black';
-      ctx.fillText(`x:${i},R:${mins[i].R},C:${mins[i].C}`, _x - 50, _y + rmx);
-    }
-    ctx.fillStyle = 'black';
-    ctx.fillText('    эпоха: ' + epoch, 5, _w - 10);
-    ctx.fillText('   пример: ' + xind, 5, _w - 20);
-    ctx.fillText('ск. обуч.: ' + ((V * 100 | 0) / 100), 5, _w - 30);
-
-    const yy = 400;
-    const yo = 10;
-    for (let i = 0; i < colors.length; ++i) {
-      draw_ellipse(5, yy + yo * i, rad, colors[i], false);
-      ctx.fillStyle = 'black';
-      ctx.fillText('цвет кластера #' + i, 5 + rad * 4, yy + yo * i + rad);
-    }
-  }
-
-});
+  Promise.all(a.map(e => loadjs(path + e)))
+    .then(_ => window.addEventListener('load', onload))
+    .catch(src => console.log(`File "${src}" not loaded`));
+})
+('www_perlin_surface/js/', [
+  'randomizer.js',
+  //'graphics/gl-scene.js'
+]);
