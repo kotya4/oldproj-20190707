@@ -1,6 +1,6 @@
 
 function onload() {
-  const rand = Randomizer.xorshift128plus(13);
+  //const rand = Randomizer.xorshift128plus(13);
   
 
   const grad3 = [
@@ -56,7 +56,7 @@ function onload() {
 
     // Calculate a set of eight hashed gradient indices
     //const pln = p.length;
-    const dim = 12; //grad3.length * grad3[0].length;
+    const dim = 12; //grad3.length;
     // The gradients of each corner
     let gi000 = perm[(X + 0 + perm[(Y + 0 + perm[(Z + 0) & 255]) & 255]) & 255] % dim;
     let gi001 = perm[(X + 0 + perm[(Y + 0 + perm[(Z + 1) & 255]) & 255]) & 255] % dim;
@@ -133,13 +133,17 @@ function onload() {
   ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
   
   let x1 = 0;
-  let xx = 2;
+  let y1 = 0;
+  let z1 = 0;
+  let xx = 250;
   const iid = setInterval(() => {
-    xx += 1;
-    //x1 += 1;
-    for (let x = 0; x < 256; ++x) {
-      for (let y = 0; y < 256; ++y) {
-        const c = noise((x + x1) / xx, y / xx, 0) * 250;
+    //xx += 1;
+    x1 -= 10;
+    //y1 += 1;
+    //z1 += 0.1;
+    for (let x = 0; x < 50; ++x) {
+      for (let y = 0; y < 50; ++y) {
+        const c = noise((x + x1) / xx, (y + y1) / xx, z1 / xx) * 250;
         ctx.fillStyle = `rgb(${c},${c},${c})`;
         ctx.fillRect(x * 1, y * 1, 1, 1);
       }
@@ -150,8 +154,11 @@ function onload() {
     ctx.fillStyle = 'black';
     ctx.fillText(xx, 400, 200);
 
-  }, 200);
+  }, 100);
+  
+  return;
   */
+
 
   /*
   ctx.fillStyle = 'white';
@@ -163,17 +170,13 @@ function onload() {
 
 
   function matmul(a, b) {
-    if (void 0 === a) return b;
-    const m = [];
-    for (let r = 0; r < a.length; ++r) {
-      m.push([]);
-      for (let c = 0; c < b[0].length; ++c) {
-        m[r].push(0);
-        for (let i = 0; i < a[0].length; ++i) {
+    const m = [...Array(a.length)]
+      .map(e => [...Array(b[0].length)]
+        .map(e => 0));
+    for (let r = 0; r < a.length; ++r)
+      for (let c = 0; c < b[0].length; ++c)
+        for (let i = 0; i < a[0].length; ++i)
           m[r][c] += a[r][i] * b[i][c];
-        }
-      }
-    }
     return m;
   }
 
@@ -186,16 +189,53 @@ function onload() {
   }
 
 
+  
+
   /*======= Creating a canvas =========*/
 
-  const canvas = document.createElement('canvas');
+  const canvas = Object.assign(document.createElement('canvas'), {
+    width: 400,
+    height: 400
+  });
   document.body.appendChild(canvas);
-  canvas.width = 600;
-  canvas.height = 400;
-  var gl = canvas.getContext('experimental-webgl');
+  const gl = canvas.getContext('webgl', {preserveDrawingBuffer: true});
 
-  /*======= Defining and storing the geometry ======*/
+
+  /*=================== Shaders ====================*/
+
+  const vertex_shader_raw = `
+attribute vec3 a_position;
+uniform mat4 u_transform;
+void main(void) {
+  gl_Position = u_transform * vec4(a_position, 1.0);
+}`;
+  const vertex_shader = gl.createShader(gl.VERTEX_SHADER);
+  gl.shaderSource(vertex_shader, vertex_shader_raw);
+  gl.compileShader(vertex_shader);
+
+  const fragment_shader_raw = `
+void main(void) {
+  gl_FragColor = vec4(0.0, 0.0, 0.0, 0.1);
+}`;
+  const fragment_shader = gl.createShader(gl.FRAGMENT_SHADER);
+  gl.shaderSource(fragment_shader, fragment_shader_raw);
+  gl.compileShader(fragment_shader);
   
+  const shaderProgram = gl.createProgram();
+  gl.attachShader(shaderProgram, vertex_shader);
+  gl.attachShader(shaderProgram, fragment_shader);
+  gl.linkProgram(shaderProgram);
+  gl.useProgram(shaderProgram);
+
+  // Bind vertex buffer object
+  const vertex_buffer = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, vertex_buffer);
+  const a_position = gl.getAttribLocation(shaderProgram, 'a_position');
+  const u_transform = gl.getUniformLocation(shaderProgram, 'u_transform');
+  gl.vertexAttribPointer(a_position, 3, gl.FLOAT, false, 0, 0);
+  gl.enableVertexAttribArray(a_position);
+
+
 
   const fov = 45 * Math.PI / 180;
   const pm11 = 1 / Math.tan(fov / 2);
@@ -204,37 +244,37 @@ function onload() {
   const znear = 0.1;
   const pm22 = zfar / (zfar - znear);
   const pm32 = pm22 * (-znear);
-
-  const projection_raw = [
+  
+  const projection = [
     [pm00, 0, 0, 0],
     [0, pm11, 0, 0],
     [0, 0, pm22, 1],
     [0, 0, pm32, 0],
   ];
 
-  const rotx = -1 * Math.PI / 180;
+  let rotx = 85 * Math.PI / 180;
   const sinx = Math.sin(rotx);
   const cosx = Math.cos(rotx);
 
-  const rotation_raw = [
+  const rotationX = [
     [1, 0, 0, 0],
-    [0, +cosx, -sinx, 0],
-    [0, +sinx, +cosx, 0],
+    [0, +cosx, +sinx, 0],
+    [0, -sinx, +cosx, 0],
     [0, 0, 0, 1],
   ];
-
-  const translation_raw = [
-    [1, 0, 0, 0],
+  
+  const rotationY = [
+    [+cosx, 0, +sinx, 0],
     [0, 1, 0, 0],
-    [0, 0, 10, 0],
+    [-sinx, 0, +cosx, 0],
     [0, 0, 0, 1],
   ];
 
   const translation = [
     [1, 0, 0, 0],
     [0, 1, 0, 0],
-    [0, 0, 1, 5],
-    [0, 0, 0, 1],
+    [0, 0, 1, 0],
+    [0, -0.25, 1.4, 1],
   ];
 
   let matrix = [
@@ -243,103 +283,80 @@ function onload() {
     [0,0,1,0],
     [0,0,0,1]
   ];
-  //matrix = matmul(matrix, translation_raw);
-  //matrix = matmul(matrix, rotation_raw);
-  matrix = matmul(matrix, projection_raw);
-  matrix = matmul(matrix, [
-    [1, 0, 0, 0],
-    [0, 1, 0, 0],
-    [0, 0, 1, 5],
-    [0, 0, 0, 1],
-  ]);
-  //matrix = matmul(matrix, translation);
+  
+  matrix = matmul(matrix, rotationX);
+  //matrix = matmul(matrix, rotationY);
+  matrix = matmul(matrix, translation);
+  matrix = matmul(matrix, projection);
+  matrix = toFloat32Array(matrix);  
 
-
-  const projection = toFloat32Array(matrix);
-
-  console.log(projection);
-
-
-  const grid = {
-    width: 10,
-    height: 10
-  };
-
-
+  gl.uniformMatrix4fv(u_transform, false, matrix);
   
 
-  /*=================== Shaders ====================*/
-
-  var vertCode = `
-attribute vec3 a_position;
-uniform mat4 u_projection;
-void main(void) {
-  gl_Position = u_projection * vec4(a_position, 1.0);
-}`;
-  var vertShader = gl.createShader(gl.VERTEX_SHADER);
-  gl.shaderSource(vertShader, vertCode);
-  gl.compileShader(vertShader);
-
-  var fragCode = `
-void main(void) {
-  gl_FragColor = vec4(0.0, 0.0, 0.0, 0.1);
-}`;
-  var fragShader = gl.createShader(gl.FRAGMENT_SHADER);
-  gl.shaderSource(fragShader, fragCode);
-  gl.compileShader(fragShader);
-  
-  var shaderProgram = gl.createProgram();
-  gl.attachShader(shaderProgram, vertShader);
-  gl.attachShader(shaderProgram, fragShader);
-  gl.linkProgram(shaderProgram);
-  gl.useProgram(shaderProgram);
-
-  /*======= Associating shaders to buffer objects ======*/
-
-  // Bind vertex buffer object
-  var vertex_buffer = gl.createBuffer();
-  gl.bindBuffer(gl.ARRAY_BUFFER, vertex_buffer);
-  //gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
-  //gl.bindBuffer(gl.ARRAY_BUFFER, null);
-  //gl.bindBuffer(gl.ARRAY_BUFFER, vertex_buffer);
-
-
-  var a_position = gl.getAttribLocation(shaderProgram, 'a_position');
-  var u_projection = gl.getUniformLocation(shaderProgram, 'u_projection');
-
-  gl.vertexAttribPointer(a_position, 3, gl.FLOAT, false, 0, 0);
-  gl.enableVertexAttribArray(a_position);
 
   /*============ Drawing the triangle =============*/
-
-  // Clear the canvas
-  gl.clearColor(0.5, 0.5, 0.5, 0.9);
-
-  // Enable the depth test
+  
+  gl.clearColor(0.1, 0.1, 0.1, 1.0);
+  //gl.clearColor(0.5, 0.5, 0.5, 0.9);
   gl.enable(gl.DEPTH_TEST);
-
   gl.viewport(0,0, canvas.width, canvas.height);
-  gl.uniformMatrix4fv(u_projection, false, projection);
+
+
+  /*
+  // LINE_STRIP qube
+  const vertices = new Float32Array([
+    -1, -1, -1,
+    -1, +1, -1,
+    +1, +1, -1,
+    +1, -1, -1,
+    -1, -1, -1,
+    -1, -1, +1,
+    +1, -1, +1,
+    +1, -1, -1,
+    +1, +1, -1,
+    +1, +1, +1,
+    +1, -1, +1,
+    -1, -1, +1,
+    -1, +1, +1,
+    +1, +1, +1,
+    -1, +1, +1,
+    -1, +1, -1,
+  ]);
+  */
+
+  
+
+  const grid = {
+    width: 50,
+    height: 50
+  };
 
   const vertices = new Float32Array(grid.width * grid.height * 3 * 6 + grid.width * 3 * 2);
-  console.log(vertices.length);
-  //setInterval(() => {
-    
+  
+  const factor = 0.15;
+  const size = 0.05;
+  let offsetx = 0;
+  let offsety = 0;
+  let offsetz = 0;
+  setInterval(() => {
+    //offsetx += 0.1;
+    //offsety -= 0.3;
+    //offsetz += 0.01;
     let i = 0;
     for (let y = 0; y < grid.height; ++y) {
       for (let x = 0; x < grid.width + 1; ++x) {
         const pos = [
-          (-1.0 + (x + 0) / grid.width * 2),
-          (+1.0 - (y + 0) / grid.height * 2),
-          1.0,
+          (-1 + (x + 0) / grid.width * 2),
+          (+1 - (y + 0) / grid.height * 2),
+          noise((x + 0 + offsetx) * factor, (y + 0 + offsety) * factor, offsetz) * size,
 
-          (-1.0 + (x + 0) / grid.width * 2),
-          (+1.0 - (y + 1) / grid.height * 2),
-          1.0,
+          (-1 + (x + 0) / grid.width * 2),
+          (+1 - (y + 1) / grid.height * 2),
+          noise((x + 0 + offsetx) * factor, (y + 1 + offsety) * factor, offsetz) * size,
 
-          (-1.0 + (x + 1) / grid.width * 2),
-          (+1.0 - (y + 0) / grid.height * 2),
-          1.0
+          (-1 + (x + 1) / grid.width * 2),
+          (+1 - (y + 0) / grid.height * 2),
+          noise((x + 1 + offsetx) * factor, (y + 0 + offsety) * factor, offsetz) * size,
         ];
         vertices[i + 0] = pos[0];
         vertices[i + 1] = pos[1];
@@ -368,21 +385,23 @@ void main(void) {
         i += 3;
       }
     }
-    
 
-    //console.log(i);
     gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
 
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
     gl.drawArrays(gl.LINES, 0, (vertices.length / 3 | 0));
-  //}, 500);
+    // POINTS, LINE_STRIP, LINE_LOOP, LINES,
+    // TRIANGLE_STRIP,TRIANGLE_FAN, TRIANGLES
 
-  // POINTS, LINE_STRIP, LINE_LOOP, LINES,
-  // TRIANGLE_STRIP,TRIANGLE_FAN, TRIANGLES
+    //clearInterval(1);
 
-
-
-
+  }, 1000 / 15);
+  
+  /*
+  setTimeout(() => {
+    window.open(canvas.toDataURL("image/png"), 'hello');
+  }, 2000);
+  */
 
 }
 
@@ -405,6 +424,5 @@ void main(void) {
     .catch(src => console.log(`File "${src}" not loaded`));
 })
 ('www_perlin_surface/js/', [
-  'randomizer.js',
-  //'graphics/gl-scene.js'
+  //'randomizer.js',
 ]);
