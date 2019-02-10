@@ -21,8 +21,9 @@ U.last = function (a) {
 
 
 U.canvas = function (width, height, color) {
-  const ctx = document.body.appendChild(Object.assign(
-    document.createElement('canvas'), { width, height }))
+  const ctx = document.body
+    .appendChild(document.createElement('canvas')
+      .assign({}, { width, height }))
     .getContext('2d');
   if (color != null) {
     ctx.fillStyle = color;
