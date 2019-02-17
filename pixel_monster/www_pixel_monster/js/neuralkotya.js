@@ -51,7 +51,7 @@ function NeuralKotya(input_size, hidden_size, output_size) {
     const output_errors = mat(targets).sub(output).map(e => Math.pow(e, 2) * Math.sign(e));
 
     // adjusts gradients (dirivative of activation function --> sigmoid)
-    const gradient_ho = output.map(e => dsigmoid(e)).hadamard_prod(output_errors).map(e => e * learning_rate);
+    const gradient_ho = output.map(e => dsigmoid(e)).dot(output_errors).map(e => e * learning_rate);
     const weights_ho_delta = gradient_ho.mul(hidden.transpose());
     weignts_ho = weignts_ho.add(weights_ho_delta);
     biases_o = biases_o.add(gradient_ho);
@@ -60,7 +60,7 @@ function NeuralKotya(input_size, hidden_size, output_size) {
     const hidden_errors = weignts_ho.transpose().mul(output_errors);
 
     // adjusts gradients
-    const gradient_ih = hidden.map(e => dsigmoid(e)).hadamard_prod(hidden_errors).map(e => e * learning_rate);
+    const gradient_ih = hidden.map(e => dsigmoid(e)).dot(hidden_errors).map(e => e * learning_rate);
     const weights_ih_delta = gradient_ih.mul(inputs.transpose());
     weignts_ih = weignts_ih.add(weights_ih_delta);
     biases_h = biases_h.add(gradient_ih);

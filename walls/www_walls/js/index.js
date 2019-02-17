@@ -1,5 +1,6 @@
 
 function onload() {
+
   const cvs = document.createElement('canvas');
   cvs.width = 400;
   cvs.height = 400;
@@ -7,8 +8,14 @@ function onload() {
   const ctx = cvs.getContext('2d');
   ctx.fillStyle = 'black';
   ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-  ctx.fillStyle = 'white';
-  ctx.fillText('Hello, __PROJECT__!', 100, ctx.canvas.height / 2 - 20);
+
+  const walls = new Walls({
+    width: ctx.canvas.width,
+    height: ctx.canvas.height,
+    depth: 10
+  });
+  walls.demo(ctx);
+
 }
 
 /*
@@ -29,6 +36,6 @@ function onload() {
     .then(_ => window.addEventListener('load', onload))
     .catch(src => console.log(`File "${src}" not loaded`));
 })
-('www___PROJECT__/js/', [
-
+('www_walls/js/', [
+  'walls.js'
 ]);
