@@ -5,6 +5,10 @@ body {
   color: white;
 }
 
+canvas {
+  image-rendering: pixelated;
+}
+
 .wrapper {
   position: absolute;
   left: 0;
@@ -16,6 +20,20 @@ body {
   align-items: center;
 }
 
-canvas {
-  image-rendering: pixelated;
+.interface {
+  width: 250px;
+  display: none;
+}
+
+#activator {
+  user-select: none;
+  width: 250px;
+  color: grey;
+  background: black;
+}
+
+#activator:hover {
+  color: white;
+  background: red;
+  cursor: pointer;
 }

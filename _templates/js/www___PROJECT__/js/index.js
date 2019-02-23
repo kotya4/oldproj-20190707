@@ -1,9 +1,10 @@
 
 function onload() {
+  const wrapper = document.getElementsByClassName('wrapper')[0];
   const cvs = document.createElement('canvas');
   cvs.width = 400;
   cvs.height = 400;
-  document.body.appendChild(cvs);
+  wrapper.appendChild(cvs);
   const ctx = cvs.getContext('2d');
   ctx.fillStyle = 'black';
   ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
