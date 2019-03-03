@@ -74,7 +74,7 @@ function onload() {
     max: 3,
     col: 201,
     row: 201,
-    //init: [[1,1,0,1,1],[1,0,1,1,1],[1,1,1,0,1],[0,0,1,0,1]]
+    init: [[1,1,0,1,1],[1,0,1,1,1],[1,1,1,0,1],[0,0,1,0,1]]
   });
   const dump = auto.dump();
   const rw = ctx.canvas.width / dump.row;
