@@ -52,13 +52,12 @@ async function onload() {
   const angle_step = fov / col_num;
 
 
-  const plane = { x: 5, y: 5, r: 0.5 };
+  const plane = { x: 5.0, y: 5.0, r: 0.5 };
 
 
-  const debugflag = true;
-  //window.onclick = draw;
+  const debugflag = false;
   window.onclick = draw;
-  //setInterval(draw, 50);
+  setInterval(draw, 50);
 
   function draw() {
     ctx.fillStyle = 'black';
@@ -75,8 +74,10 @@ async function onload() {
     const plane_r = { x: plane.x + plane.r * Math.sin(eye - Math.PI / 2), y: plane.y + plane.r * Math.cos(eye - Math.PI / 2) };
     const plane_max = { x: Math.max(plane_l.x, plane_r.x) + 0.01, y: Math.max(plane_l.y, plane_r.y) + 0.01 };
     const plane_min = { x: Math.min(plane_l.x, plane_r.x) - 0.01, y: Math.min(plane_l.y, plane_r.y) - 0.01 };
+    //const plane_w = Math.sqrt(plane_max.x * plane_max.x + plane_max.y * plane_max.y) - Math.sqrt(plane_min.x * plane_min.x + plane_min.y * plane_min.y);
 
     for (let i = 0; i < col_num; ++i) {
+
       angle += angle_step;
       const sina = Math.sin(angle);
       const cosa = Math.cos(angle);
@@ -105,18 +106,30 @@ async function onload() {
 
         // drawing plane
         if (plane.x - plane.r < real_x && real_x < plane.x + plane.r && plane.y - plane.r < real_y && real_y < plane.y + plane.r) {
-          const d = plane_dist * 1;//Math.cos(eye - angle);
+          const d = plane_dist ;// Math.cos(eye - angle);
           const h = ctx.canvas.height / (d + 1);
           if (plane_min.x < real_x && real_x < plane_max.x && plane_min.y < real_y && real_y < plane_max.y) {
 
-            const mx = (real_x - plane_min.x);
-            const my = (real_y - plane_min.y);
-            const img_x = Math.abs(mx - my) * img.width % img.width;
-            console.log(mx, my, img_x);
+            //const nyu = Math.PI / 2 - (eye - angle);
+            //const ON = plane_dist / Math.tan(nyu);
+            //const PR = Math.sqrt(Math.pow(pos[0] - plane_min.x, 2) + Math.pow(pos[1] - plane_min.y, 2));
+            //const OR = Math.sqrt(PR * PR - plane_dist * plane_dist);
+            //const N = ON - OR;
+            //console.log(nyu, ON, PR, OR, N);
 
+            //const mx = (real_x - plane_min.x);
+            //const my = (real_y - plane_min.y);
+            plane_tex += plane_dist / col_num;
+            const img_x = plane_tex * img.width;//Math.sqrt(mx * mx + my * my) * img.width % img.width;
+            //console.log(mx, my, img_x);
+
+            //console.log(ON - OR, mx - my);
             //const img_x = (Math.abs(((real_x - ~~real_x) - (real_y - ~~real_y)) - plane.r * 2) * img.width) % img.width;
 
             ctx.drawImage(img, img_x, 0, scale_w, img.height, i * scale_w, half_height - h, scale_w, h * 2);
+
+            //ctx.fillStyle = `rgba(${256 - 255 * Math.abs(ON)},255,${255 * Math.abs(ON)},1.0)`;
+            //ctx.fillRect(i * scale_w, half_height - h - 1, scale_w, h * 2 + 2);
 
             //ctx.fillStyle = `blue`;
             //ctx.fillRect(i * scale_w, half_height - h - 1, scale_w, h * 2 + 2);
@@ -192,12 +205,12 @@ async function onload() {
       ctx.fillStyle = map[x][y] ? 'white' : 'black';
       ctx.fillRect(x * 10, y * 10, 9, 9);
     }
-    ctx.fillStyle = 'red';
-    ctx.fillRect(old[0] * 10 - 5, old[1] * 10 - 5, 10, 10);
+    //ctx.fillStyle = 'red';
+    //ctx.fillRect(old[0] * 10 - 5, old[1] * 10 - 5, 10, 10);
     ctx.fillStyle = 'blue';
     ctx.fillRect(pos[0] * 10 - 5, pos[1] * 10 - 5, 10, 10);
-    ctx.fillStyle = 'green';
-    ctx.fillRect(plane.x * 10 - 5, plane.y * 10 - 5, 10, 10);
+    //ctx.fillStyle = 'green';
+    //ctx.fillRect(plane.x * 10 - 5, plane.y * 10 - 5, 10, 10);
 
     ctx.strokeStyle = 'red';
     ctx.beginPath();
@@ -207,9 +220,18 @@ async function onload() {
 
     ctx.strokeStyle = 'yellow';
     ctx.beginPath();
-    ctx.moveTo(plane.x * 10 - 20 * Math.sin(eye - Math.PI / 2), plane.y * 10 - 20 * Math.cos(eye - Math.PI / 2)); // left
-    ctx.lineTo(plane.x * 10 + 20 * Math.sin(eye - Math.PI / 2), plane.y * 10 + 20 * Math.cos(eye - Math.PI / 2)); // right
+    ctx.moveTo(plane.x * 10 - plane.r * 10 * Math.sin(eye - Math.PI / 2), plane.y * 10 - plane.r * 10 * Math.cos(eye - Math.PI / 2)); // left
+    ctx.lineTo(plane.x * 10 + plane.r * 10 * Math.sin(eye - Math.PI / 2), plane.y * 10 + plane.r * 10 * Math.cos(eye - Math.PI / 2)); // right
     ctx.stroke();
+
+    ctx.strokeStyle = 'green';
+    ctx.beginPath();
+    ctx.moveTo(pos[0] * 10, pos[1] * 10);
+    ctx.lineTo(pos[0] * 10 + 200 * Math.sin(eye - fov / 2), pos[1] * 10 + 200 * Math.cos(eye - fov / 2));
+    ctx.moveTo(pos[0] * 10, pos[1] * 10);
+    ctx.lineTo(pos[0] * 10 + 200 * Math.sin(eye + fov / 2), pos[1] * 10 + 200 * Math.cos(eye + fov / 2));
+    ctx.stroke();
+
 
   }
 
