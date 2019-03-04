@@ -91,10 +91,12 @@ async function onload() {
             // так и не научился: не могу вычислить координаты текстуры.
             // есть глупое решение -- итерировать каждый раз при падении луча на прямоугольник
             // переменную plane_tex. выглядеть код будет вот так:
-            //plane_tex += plane_dist / col_num;
-            //if (angle_side > 0) {
-            //const img_x = plane_tex * img.width;
-            //ctx.drawImage(img, img_x, 0, scale_w, img.height, i * scale_w, half_height - h, scale_w, h * 2);
+            //
+            // plane_tex += plane_dist / col_num;
+            // if (angle_side > 0) {
+            // const img_x = plane_tex * img.width;
+            // ctx.drawImage(img, img_x, 0, scale_w, img.height, i * scale_w, half_height - h, scale_w, h * 2);
+            //
             // основная проблема данного решения: если луч НЕ падает на прямоугольник (его часть находится
             // за стеной или за экраном), итерация не происходит, в итоге текстура "смещается". решить эту проблему
             // тоже крайне сложно, и вообще - у меня есть дла поважнее.
