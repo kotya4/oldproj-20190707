@@ -1,36 +1,5 @@
-const utils = {};
 
-utils.map = [
-  '1111111111111111111111111',
-  '1                       1',
-  '1                       1',
-  '1             222222    1',
-  '1             2    2    1',
-  '1             2    2    1',
-  '1                  2    1',
-  '1             222222    1',
-  '1               1       1',
-  '1               1       1',
-  '1               1       1',
-  '1111111111111111111111111',
-].map(e => e.split('').map(e => ~~e));
-
-utils.create_canvas = (width, height, wrapper = document.body) => {
-  const cvs = document.createElement('canvas');
-  cvs.width = width;
-  cvs.height = height;
-  wrapper.appendChild(cvs);
-  return cvs.getContext('2d');
-}
-
-utils.listen_keyboard = () => {
-  const keys = {};
-  window.onkeyup = e => keys[e.keyCode] = false;
-  window.onkeydown = e => keys[e.keyCode] = true;
-  return keys;
-}
-
-utils.collision = () => {
+function CollisionDetector() {
   const scale = (v, a) => v.map(e => e * a);
   const sub = (a, b) => [a[0] - b[0], a[1] - b[1]];
   const add = (a, b) => [a[0] + b[0], a[1] + b[1]];
