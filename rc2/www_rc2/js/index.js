@@ -1,5 +1,6 @@
 
 function onload() {
+
   const wrapper = document.getElementsByClassName('wrapper')[0];
   const cvs = document.createElement('canvas');
   cvs.width = 320;
@@ -11,28 +12,28 @@ function onload() {
   window.onkeyup = e => keys[e.keyCode] = false;
   window.onkeydown = e => keys[e.keyCode] = true;
 
-  const map = [
+  let map = [
     [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
     [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
-    [1,0,0,3,3,3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
-    [1,0,0,3,0,3,0,0,1,1,1,2,1,1,1,1,1,2,1,1,1,2,1,0,0,0,0,0,0,0,0,1],
-    [1,0,0,3,0,4,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
-    [1,0,0,0,0,3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
-    [1,0,0,0,0,3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,3,1,1,1,1,1],
-    [1,0,0,3,0,3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
-    [1,0,0,3,0,4,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2],
-    [1,0,0,3,0,3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
-    [1,0,0,3,3,3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,3,1,1,1,1,1],
+    [1,0,0,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+    [1,0,0,1,0,1,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,1],
+    [1,0,0,1,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+    [1,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+    [1,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1],
+    [1,0,0,1,0,1,0,3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+    [1,0,0,1,0,1,0,3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+    [1,0,0,1,0,1,0,3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+    [1,0,0,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1],
     [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
-    [1,0,0,0,0,0,0,0,0,3,3,3,0,0,3,3,3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2],
-    [1,0,0,0,0,0,0,0,0,3,3,3,0,0,3,3,3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
-    [1,0,0,0,0,0,0,0,0,3,3,3,0,0,3,3,3,0,0,0,0,0,0,0,0,0,3,1,1,1,1,1],
-    [1,0,0,0,0,0,0,0,0,3,3,3,0,0,3,3,3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
-    [1,0,0,4,0,0,4,2,0,2,2,2,2,2,2,2,2,0,2,4,4,0,0,4,0,0,0,0,0,0,0,1],
-    [1,0,0,4,0,0,4,0,0,0,0,0,0,0,0,0,0,0,0,0,4,0,0,4,0,0,0,0,0,0,0,1],
-    [1,0,0,4,0,0,4,0,0,0,0,0,0,0,0,0,0,0,0,0,4,0,0,4,0,0,0,0,0,0,0,1],
-    [1,0,0,4,0,0,4,0,0,0,0,0,0,0,0,0,0,0,0,0,4,0,0,4,0,0,0,0,0,0,0,1],
-    [1,0,0,4,3,3,4,2,2,2,2,2,2,2,2,2,2,2,2,2,4,3,3,4,0,0,0,0,0,0,0,1],
+    [1,0,0,0,0,0,0,0,0,1,1,1,0,0,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+    [1,0,0,0,0,0,0,0,0,1,1,1,0,0,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+    [1,0,0,0,0,0,0,0,0,1,1,1,0,0,1,1,1,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1],
+    [1,0,0,0,0,0,0,0,0,1,1,1,0,0,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+    [1,0,0,1,0,0,1,1,0,1,1,1,1,1,1,1,1,0,1,1,1,0,0,1,0,0,0,0,0,0,0,1],
+    [1,0,0,1,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,1,0,0,0,0,0,0,0,1],
+    [1,0,0,1,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,1,0,0,0,0,0,0,0,1],
+    [1,0,0,1,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,1,0,0,0,0,0,0,0,1],
+    [1,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,1],
     [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
     [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
     [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
@@ -50,12 +51,16 @@ function onload() {
 
   const minimap_scale = 10;
 
-  function draw_ray(x, y) {
-    const grad = ctx.createLinearGradient(player.y * minimap_scale, player.x * minimap_scale, 150, 150); // TODO
-    grad.addColorStop(0, "red");
-    grad.addColorStop(1, "green");
+  function draw_ray(ox, oy, x, y) {
+    const grad = ctx.createLinearGradient(oy * minimap_scale, ox * minimap_scale, y * minimap_scale, x  * minimap_scale);
+    grad.addColorStop(0, 'yellow');
+    grad.addColorStop(1, 'red');
 
     ctx.strokeStyle = grad;
+    ctx.beginPath();
+    ctx.moveTo(oy * minimap_scale, ox * minimap_scale);
+    ctx.lineTo(y * minimap_scale, x * minimap_scale);
+    ctx.stroke();
   }
 
   function draw_minimap() {
@@ -99,6 +104,10 @@ function onload() {
       player.x = x;
       player.y = y;
     }
+  }
+
+  function is_out_of_border(x, y) {
+    return y < 0 || y >= map[0].length || x < 0 || x >= map.length;
   }
 
   function is_block(x, y) {
@@ -170,98 +179,124 @@ function onload() {
     return { x: nx, y: ny };
   }
 
-  // TODO
+
+
+  const fov = Math.PI / 4;
+  const rays_number = 50;
+  const angle_step = fov / rays_number;
+  const TWO_PI = 2 * Math.PI;
 
   function castRays() {
-    var stripIdx = 0;
-    for (var i=0; i < numRays; i++) {
-      // Where on the screen does ray go through?
-      var rayScreenPos = (-numRays/2 + i) * stripWidth;
-
-      // The distance from the viewer to the point
-      // on the screen, simply Pythagoras.
-      var rayViewDist = Math.sqrt(rayScreenPos*rayScreenPos + viewDist*viewDist);
-
-      // The angle of the ray, relative to the viewing direction
-      // Right triangle: a = sin(A) * c
-      var rayAngle = Math.asin(rayScreenPos / rayViewDist);
-      castSingleRay(
-        // Add the players viewing direction
-        // to get the angle in world space
-        player.rot + rayAngle,
-        stripIdx++
-      );
-    }
+    for (let ray_angle = 0; ray_angle < fov; ray_angle += angle_step)
+      cast_single_ray(player.rot + ray_angle - fov / 2, player.x, player.y);
   }
 
-  function castSingleRay(rayAngle) {
-    // Make sure the angle is between 0 and 360 degrees
-    rayAngle %= twoPI;
-    if (rayAngle > 0) rayAngle += twoPI;
+  function cast_single_ray(angle, from_x, from_y, from_dist = 0) {
+    if ((angle %= TWO_PI) < 0) angle += TWO_PI;
 
-    // Moving right/left? up/down? Determined by
-    // which quadrant the angle is in
-    var right = (rayAngle > twoPI * 0.75 || rayAngle < twoPI * 0.25);
-    var up = (rayAngle < 0 || rayAngle > Math.PI);
+    const right = angle > TWO_PI * 0.75 || angle < TWO_PI * 0.25;
+    const up = angle < 0 || angle > TWO_PI * 0.5;
 
-    var angleSin = Math.sin(rayAngle), angleCos = Math.cos(rayAngle);
+    const sina = Math.sin(angle);
+    const cosa = Math.cos(angle);
 
-    // The distance to the block we hit
-    var dist = 0;
-    // The x and y coord of where the ray hit the block
-    var xHit = 0, yHit = 0;
-    // The x-coord on the texture of the block,
-    // i.e. what part of the texture are we going to render
-    var textureX;
-    // The (x,y) map coords of the block
-    var wallX;
-    var wallY;
+    const vslope = sina / cosa;
+    const vdx = right ? 1 : -1;
+    const vdy = vdx * vslope;
 
-    // First check against the vertical map/wall lines
-    // we do this by moving to the right or left edge
-    // of the block we’re standing in and then moving
-    // in 1 map unit steps horizontally. The amount we have
-    // to move vertically is determined by the slope of
-    // the ray, which is simply defined as sin(angle) / cos(angle).
+    const hslope = cosa / sina;
+    const hdy = up ? -1 : 1;
+    const hdx = hdy * hslope;
 
-    // The slope of the straight line made by the ray
-    var slope = angleSin / angleCos;
-    // We move either 1 map unit to the left or right
-    var dX = right ? 1 : -1;
-    // How much to move up or down
-    var dY = dX * slope;
+    let horizontal = false;
+    let hit_x = 0;
+    let hit_y = 0;
+    let dist = 0;
+    let tex_x;
+    let x;
+    let y;
 
-    // Starting horizontal position, at one
-    // of the edges of the current map block
-    var x = right ? Math.ceil(player.x) : Math.floor(player.x);
-    // Starting vertical position. We add the small horizontal
-    // step we just made, multiplied by the slope
-    var y = player.y + (x - player.x) * slope;
+    let hit_wall_x = 0;
+    let hit_wall_y = 0;
 
-    while (x >= 0 && x < mapWidth && y >= 0 && y < mapHeight) {
-      var wallX = Math.floor(x + (right ? 0 : -1));
-      var wallY = Math.floor(y);
+    let next_wall_x = 0;
+    let next_wall_y = 0;
 
-      // Is this point inside a wall block?
-      if (map[wallY][wallX] > 0) {
-        var distX = x - player.x;
-        var distY = y - player.y;
-        // The distance from the player to this point, squared
-        dist = distX*distX + distY*distY;
 
-        // Save the coordinates of the hit. We only really
-        // use these to draw the rays on minimap
-        xHit = x;
-        yHit = y;
+
+    x = right ? Math.ceil(from_x) : Math.floor(from_x);
+    y = from_y + (x - from_x) * vslope;
+    while (!is_out_of_border(x, y)) {
+      const wall_x = ~~(x - !right);
+      const wall_y = ~~y;
+
+      if (is_block(wall_x, wall_y)) {
+        const dist_x = x - from_x;
+        const dist_y = y - from_y;
+        dist = dist_x * dist_x + dist_y * dist_y;
+
+        tex_x = y % 1;
+        if (!right) tex_x = 1 - tex_x;
+
+        hit_x = x;
+        hit_y = y;
+        hit_wall_x = wall_x;
+        hit_wall_y = wall_y;
+        next_wall_x = x + vdx;
+        next_wall_y = y + vdy;
+
+        horizontal = true;
+
         break;
       }
-      x += dX;
-      y += dY;
+      x += vdx;
+      y += vdy;
+    }
+
+    y = up ? Math.floor(from_y) : Math.ceil(from_y);
+    x = from_x + (y - from_y) * hslope;
+    while (!is_out_of_border(x, y)) {
+      const wall_y = ~~(y - up);
+      const wall_x = ~~x;
+
+      if (is_block(wall_x, wall_y)) {
+        const dist_x = x - from_x;
+        const dist_y = y - from_y;
+        const blockDist = dist_x * dist_x + dist_y * dist_y;
+        if (!dist || blockDist < dist) {
+          dist = blockDist;
+          hit_x = x;
+          hit_y = y;
+          hit_wall_x = wall_x;
+          hit_wall_y = wall_y;
+          next_wall_x = x + hdx;
+          next_wall_y = y + hdy;
+
+          tex_x = x % 1;
+          if (up) tex_x = 1 - tex_x;
+
+          horizontal = false;
+        }
+        break;
+      }
+      x += hdx;
+      y += hdy;
+    }
+
+    if (dist) {
+      draw_ray(from_x, from_y, hit_x, hit_y);
+
+      x = hit_wall_x;
+      y = hit_wall_y;
+      if (!is_out_of_border(x, y) && map[x][y] === 3) {
+         // TODO: нужно правильно рассчитать дистанцию, сложить старую дистанцию с новой + дистанция от hit_wall до next_wall
+        cast_single_ray(angle, next_wall_x, next_wall_y, dist + ?);
+      }
+
     }
 
 
-    if (dist)
-    drawRay(xHit, yHit);
+
   }
 
   setInterval(() => {
@@ -270,6 +305,8 @@ function onload() {
 
     draw_minimap();
     keyboard();
+
+    castRays(player.x, player.y);
 
   }, 50);
 
@@ -294,5 +331,5 @@ function onload() {
     .catch(src => console.log(`File "${src}" not loaded`));
 })
 ('www_rc2/js/', [
-
+  'map-encoder.js',
 ]);
