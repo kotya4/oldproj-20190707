@@ -9,7 +9,7 @@ function ImageList() {
       img.src = path + p;
       img.onload = () => res();
       img.onerror = () => rej(p);
-      images[p.replace(/\//g, '_').substr(0, p.indexOf('.'))] = img;
+      images[p.replace(/\//g, '_').substr(0, p.lastIndexOf('.'))] = img;
     })));
   }
 

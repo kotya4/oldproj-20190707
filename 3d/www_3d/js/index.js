@@ -11,8 +11,10 @@ async function onload() {
     'roof/0.png',
     'roof/1.png',
     'roof/2.png',
+    'ped/0.png',
   ]);
 
+  const mat3 = glMatrix.mat3;
   const mat4 = glMatrix.mat4;
 
   const screen_width = 400;
@@ -43,8 +45,8 @@ async function onload() {
 
   const map = [
     [1, 0, 1, 1, 1, 1],
-    [0, 0, 1, 0, 0, 1],
-    [1, 0, 1, 1, 0, 0],
+    [0, 0, 0, 0, 0, 1],
+    [1, 0, 0, 0, 0, 0],
     [0, 0, 0, 0, 0, 1],
     [1, 0, 1, 0, 1, 1],
   ].map((e, x) => e.map((e, y) => e * (1 + ~~(Math.random() * 3))));
@@ -52,6 +54,10 @@ async function onload() {
   const radius = 2.5;
   const height = 2.0;
 
+  const tmatrix = mat3.create();
+
+  let ped_texture_offset = 0.0;
+  setInterval(() => ped_texture_offset = (ped_texture_offset + 0.25) % 1.0, 150);
 
   let rotation = 0;
   setInterval(() => {
@@ -68,7 +74,7 @@ async function onload() {
     */
 
     const modelview = mat4.create();
-    mat4.translate(modelview, modelview, [0, 0, -15]);
+    mat4.translate(modelview, modelview, [0, 0, -3]);
     mat4.rotateX(modelview, modelview, Math.PI / 6);
     mat4.rotateY(modelview, modelview, rotation);
 
@@ -80,7 +86,7 @@ async function onload() {
       mat4.translate(mv_ground, modelview, pos);
       mat4.scale(mv_ground, mv_ground, [radius / 2, height, radius / 2]);
       mat4.rotateX(mv_ground, mv_ground, Math.PI / 2);
-      vbo_cube.draw('plate', textures.ground_0, mv_ground);
+      vbo_cube.draw('plate', textures.ground_0, tmatrix, mv_ground);
 
       if (map[x][y]) {
         // roof
@@ -88,15 +94,37 @@ async function onload() {
         mat4.translate(mv_roof, modelview, [pos[0], 3 * height, pos[2]]);
         mat4.scale(mv_roof, mv_roof, [1.0, height, 1.0]);
         mat4.rotateX(mv_roof, mv_roof, Math.PI / 2);
-        vbo_cube.draw('plate', roof_textures[map[x][y]], mv_roof);
+        vbo_cube.draw('plate', roof_textures[map[x][y]], tmatrix, mv_roof);
 
         // build
         const mv_build = mat4.create();
         mat4.translate(mv_build, modelview, pos);
         mat4.scale(mv_build, mv_build, [1.0, height, 1.0]);
-        vbo_cube.draw('box', build_textures[map[x][y]], mv_build);
+        vbo_cube.draw('box', build_textures[map[x][y]], tmatrix, mv_build);
       }
     }
+
+
+    // test-box
+    const mv_cube = mat4.create();
+    mat4.translate(mv_cube, modelview, [0.0, 0.1, 0.0]);
+    mat4.scale(mv_cube, mv_cube, [0.1, 0.1, 0.1]);
+    vbo_cube.draw('cube', textures.roof_0, tmatrix, mv_cube);
+
+
+    // ped
+    const mv_ped = mat4.create();
+    // z-offset needs to be because 'plate' is actially the front of the cube with sizes 2.0,
+    // so if we need plate to be centered we must offset it by z value.
+    // y-offset always equals to height (y-scaling) of the model.
+    mat4.translate(mv_ped, modelview, [0, 0.5, -0.25]);
+    mat4.scale(mv_ped, mv_ped, [0.25, 0.5, 0.25]);
+    const tm_ped = mat3.create();
+    mat3.translate(tm_ped, tm_ped, [ped_texture_offset, 0.0]);
+    // x-scaling must be 1.0 / num_of_tiles, and x-offset must be scaling (for animation) by that value too.
+    mat3.scale(tm_ped, tm_ped, [0.25, 1.0]);
+    vbo_cube.draw('plate', textures.ped_0, tm_ped, mv_ped);
+
 
     rotation += 0.005;
   }, 20);

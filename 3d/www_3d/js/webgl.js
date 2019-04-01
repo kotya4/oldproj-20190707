@@ -12,8 +12,10 @@ function WebGL(width, height, projection, parent = document.body) {
 attribute vec3 a_position;
 attribute vec4 a_vcolor;
 attribute vec2 a_texture;
+
 uniform mat4 u_mvmatrix;
 uniform mat4 u_pmatrix;
+
 varying vec4 v_vcolor;
 varying vec2 v_texture;
 
@@ -25,14 +27,17 @@ void main(void) {
 
   const fragment_shader_raw = `
 precision highp float;
+
 uniform vec4 u_fcolor;
+uniform mat3 u_tmatrix;
+
 varying vec4 v_vcolor;
 varying vec2 v_texture;
 
 uniform sampler2D u_sampler;
 
 void main(void) {
-  gl_FragColor = texture2D(u_sampler, vec2(v_texture.s, v_texture.t));
+  gl_FragColor = texture2D(u_sampler, (u_tmatrix * vec3(v_texture.s, v_texture.t, 1.0)).xy);
   //gl_FragColor = v_vcolor * u_fcolor;
 }`;
 
@@ -62,6 +67,7 @@ void main(void) {
   const u_pmatrix = gl.getUniformLocation(shader_program, 'u_pmatrix');
   const u_fcolor = gl.getUniformLocation(shader_program, 'u_fcolor');
   const u_texture = gl.getUniformLocation(shader_program, 'u_texture');
+  const u_tmatrix = gl.getUniformLocation(shader_program, 'u_tmatrix');
 
   const a_position = gl.getAttribLocation(shader_program, 'a_position');
   gl.enableVertexAttribArray(a_position);
@@ -85,7 +91,12 @@ void main(void) {
 
   gl.enable(gl.DEPTH_TEST);
   gl.viewport(0,0, cvs.width, cvs.height);
-  gl.clearColor(0, 0, 0, 0.0);
+  gl.clearColor(0.0, 0.0, 0.0, 1.0);
+
+  // enables alpha-blending (do sort manualy all models that have transparent textures)
+
+  gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+  gl.enable(gl.BLEND);
 
   // -- methods --
 
@@ -166,16 +177,16 @@ void main(void) {
     };
 
     return {
-      draw: (primitive, texture, modelview) => {
+      draw: (primitive, texture, tmatrix, modelview) => {
         if (!(primitive in primitives)) primitive = 'cube';
 
         gl.uniformMatrix4fv(u_mvmatrix, false, modelview);
+        gl.uniformMatrix3fv(u_tmatrix, false, tmatrix);
+        gl.uniform4fv(u_fcolor, [1.0, 1.0, 1.0, 1.0]);
 
         gl.activeTexture(gl.TEXTURE0);
         gl.bindTexture(gl.TEXTURE_2D, texture);
         gl.uniform1i(u_texture, 0);
-
-        gl.uniform4f(u_fcolor, ...[1.0, 1.0, 1.0, 1.0]);
 
         gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, index_buffer);
         gl.drawElements(gl.TRIANGLES, primitives[primitive][1], gl.UNSIGNED_BYTE, primitives[primitive][0]);
@@ -198,6 +209,8 @@ void main(void) {
     // gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
     // -- Prevents t-coordinate wrapping (repeating).
     // gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    // Also see:
+    // https://open.gl/textures
   }
 
   return {
