@@ -2,8 +2,8 @@
 async function onload() {
   const wrapper = document.getElementsByClassName('wrapper')[0];
 
-  const image_list = ImageList();
-  await image_list.load('www_3d/img/', [
+  const images = ImageList();
+  await images.load('www_3d/img/', [
     'ground_0.png',
     'build/0.png',
     'build/1.png',
@@ -25,7 +25,7 @@ async function onload() {
 
   const webgl = WebGL(screen_width, screen_height, projection, wrapper);
 
-  const textures = image_list.map(e => webgl.create_texture(e));
+  const textures = images.map(e => webgl.create_texture(e));
 
   const build_textures = [
     null,
@@ -156,7 +156,7 @@ async function onload() {
     .catch(src => console.log(`File "${src}" not loaded`));
 })
 ('www_3d/js/', [
-  'mat.js',
+  //'mat.js',
   'webgl.js',
   'image-list.js',
   'gl-matrix-min.js',
