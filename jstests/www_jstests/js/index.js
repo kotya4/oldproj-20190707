@@ -50,7 +50,7 @@ window.onload = function () {
   "index_${gen}_4"<br>
   ],<br>
   "validVariant": "index_${gen}_1",<br>
-  "illustration": "MYILLUS"<br>
+  "illustration": "illustration_${gen}"<br>
   },<br>`;
   t['images'] = gen => `
   {<br>
