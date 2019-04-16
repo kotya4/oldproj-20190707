@@ -2,20 +2,22 @@
 window.onload = function () {
   const INDEX = 1;
 
-  const QUESTIONS = [
-  ];
+  /* temp
+  const QUESTIONS = [];
+  const VARIANTS = [];
+  const TYPES = [];
+  */
 
-  const VARIANTS = [
-  ];
+  const QUESTIONS = [];
+  const VARIANTS = [];
+  const TYPES = [];
 
-  const TYPES = [
-  ];
+
+  console.log('q: ' + QUESTIONS.length + ' v: ' + VARIANTS.length + ' t: ' + TYPES.length);
+  //console.log(VARIANTS[86 - 1]);
 
   if (QUESTIONS.length !== VARIANTS.length || QUESTIONS.length !== TYPES.length || VARIANTS.length !== TYPES.length) {
-    //console.log(VARIANTS[51]);
-
     document.getElementById('w').innerHTML = 'SIZES MISMATCH';
-    console.log('q: ' + QUESTIONS.length + ' v: ' + VARIANTS.length + ' t: ' + TYPES.length);
     return;
   }
 
@@ -57,19 +59,32 @@ window.onload = function () {
   "type": "images",<br>
   "id": "gen_${gen}",<br>
   "variants": [<br>
-  "IMA1",<br>
-  "IMA2",<br>
-  "IMA3",<br>
-  "IMA4"<br>
+  "img_${gen}_1",<br>
+  "img_${gen}_2",<br>
+  "img_${gen}_3",<br>
+  "img_${gen}_4"<br>
   ],<br>
-  "validVariant": "IMA1"<br>
+  "validVariant": "img_${gen}_1"<br>
+  },<br>`;
+  t['illustration&images'] = gen => `
+  {<br>
+  "type": "illustration-images",<br>
+  "id": "gen_${gen}",<br>
+  "variants": [<br>
+  "img_${gen}_1",<br>
+  "img_${gen}_2",<br>
+  "img_${gen}_3",<br>
+  "img_${gen}_4"<br>
+  ],<br>
+  "validVariant": "img_${gen}_1"<br>
+  "illustration": "illustration_${gen}"<br>
   },<br>`;
 
   const q = QUESTIONS.map(e => e.replace(/&/g, "&amp;").replace(/>/g, "&gt;").replace(/</g, "&lt;").replace(/"/g, "&quot;"));
 
   const v = VARIANTS.map(e => {
     if (e == null) return ['NIL', 'NIL', 'NIL', 'NIL'];
-    return e.split('\n').map(e => e/*.substr(3)*/.replace(/&/g, "&amp;").replace(/>/g, "&gt;").replace(/</g, "&lt;").replace(/"/g, "&quot;"));
+    return e.split('\n').map(e => e.substr(3).replace(/&/g, "&amp;").replace(/>/g, "&gt;").replace(/</g, "&lt;").replace(/"/g, "&quot;"));
   });
 
   w.innerHTML += '<br><br>===================== VARIANTS ========================<br><br>';
@@ -104,7 +119,17 @@ window.onload = function () {
   w.innerHTML += '<br><br>===================== CARD JSON ========================<br><br>';
   // card.json
   for (let i = 0; i < q.length; ++i) {
-    w.innerHTML += t[TYPES[i]](INDEX + i);
+    try {
+      w.innerHTML += t[TYPES[i]](INDEX + i);
+    } catch(e) {
+      console.log('=== error in types ===');
+      console.log('i: ' + i);
+      console.log('INDEX + i: ' + (INDEX + i));
+      console.log('TYPES[i]: ' + TYPES[i]);
+      console.log('t[TYPES[i]]: ' + t[TYPES[i]]);
+      console.log('t[TYPES[i]](INDEX + i): ' + t[TYPES[i]](INDEX + i));
+      throw e;
+    }
   }
 
 }
