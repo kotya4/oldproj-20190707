@@ -2,4 +2,8 @@
 import vihuhol
 
 if "__main__" == __name__:
-    vihuhol.open_rules()
+	try:
+		vihuhol.run()
+	except:
+		pass
+
