@@ -211,7 +211,7 @@ function onload() {
     let horizontal = false;
     let hit_x = 0;
     let hit_y = 0;
-    let dist = 0;
+    let dist = from_dist;
     let tex_x;
     let x;
     let y;
@@ -285,14 +285,14 @@ function onload() {
 
     if (dist) {
       draw_ray(from_x, from_y, hit_x, hit_y);
-
+      /*
       x = hit_wall_x;
       y = hit_wall_y;
       if (!is_out_of_border(x, y) && map[x][y] === 3) {
          // TODO: нужно правильно рассчитать дистанцию, сложить старую дистанцию с новой + дистанция от hit_wall до next_wall
-        cast_single_ray(angle, next_wall_x, next_wall_y, dist + ?);
+        cast_single_ray(angle, next_wall_x, next_wall_y, dist);
       }
-
+      */
     }
 
 

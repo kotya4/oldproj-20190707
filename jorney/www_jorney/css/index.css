@@ -18,6 +18,4 @@ body {
 
 canvas {
   image-rendering: pixelated;
-  width: 640px;
-  width: 480px;
 }
