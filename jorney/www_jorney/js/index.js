@@ -1,15 +1,28 @@
 
 function onload() {
-  const wrapper = document.getElementsByClassName('wrapper')[0];
-  const cvs = document.createElement('canvas');
-  cvs.width = 400;
-  cvs.height = 400;
-  wrapper.appendChild(cvs);
-  const ctx = cvs.getContext('2d');
-  ctx.fillStyle = 'black';
-  ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-  ctx.fillStyle = 'white';
-  ctx.fillText('Hello, jorney!', 100, ctx.canvas.height / 2 - 20);
+
+
+  /*
+  const perlin = Perlin({ precomuted: true });
+
+  const scale = 0.5;
+  let z = 0;
+  setInterval(() => {
+    ctx.fillStyle = 'green';
+    ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+    for (let x = 0; x < 20; ++x) for (let y = 0; y < 20; ++y) {
+      const c = ~~(perlin.noise(x * scale, y * scale, z) * 256);
+      if (c > 0) {
+        ctx.fillStyle = `rgb(${c}, ${c}, ${c})`;
+        ctx.fillRect(10 * x, 10 * y, 10, 10);
+      }
+    }
+    //ctx.fillStyle = 'green';
+    //ctx.fillText('' + z, 10, 10);
+    z += 1;
+  }, 100);
+  */
+
 }
 
 /*
@@ -31,5 +44,5 @@ function onload() {
     .catch(src => console.log(`File "${src}" not loaded`));
 })
 ('www_jorney/js/', [
-
+  'perlin.js'
 ]);
