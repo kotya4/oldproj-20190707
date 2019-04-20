@@ -12,6 +12,8 @@ async function onload() {
     'roof/1.png',
     'roof/2.png',
     'ped/0.png',
+    'bal/0.png',
+    'bal/1.png',
   ]);
 
   const mat3 = glMatrix.mat3;
@@ -41,12 +43,14 @@ async function onload() {
     textures.roof_2,
   ];
 
+  const bal_textures = [...Array(8)].map(() => Math.random() < 0.5 ? textures.bal_0 : textures.bal_1);
+
   const vbo_cube = webgl.create_vbo_cube();
 
   const map = [
     [1, 0, 1, 1, 1, 1],
     [0, 0, 0, 0, 0, 1],
-    [1, 0, 0, 0, 0, 0],
+    [1, 0, 0, 0, 1, 0],
     [0, 0, 0, 0, 0, 1],
     [1, 0, 1, 0, 1, 1],
   ].map((e, x) => e.map((e, y) => e * (1 + ~~(Math.random() * 3))));
@@ -57,7 +61,7 @@ async function onload() {
   const tmatrix = mat3.create();
 
   let ped_texture_offset = 0.0;
-  setInterval(() => ped_texture_offset = (ped_texture_offset + 0.25) % 1.0, 150);
+  //setInterval(() => ped_texture_offset = (ped_texture_offset + 0.25) % 1.0, 150);
 
   let rotation = 0;
   setInterval(() => {
@@ -74,7 +78,7 @@ async function onload() {
     */
 
     const modelview = mat4.create();
-    mat4.translate(modelview, modelview, [0, 0, -3]);
+    mat4.translate(modelview, modelview, [0, 0, -13]);
     mat4.rotateX(modelview, modelview, Math.PI / 6);
     mat4.rotateY(modelview, modelview, rotation);
 
@@ -97,10 +101,35 @@ async function onload() {
         vbo_cube.draw('plate', roof_textures[map[x][y]], tmatrix, mv_roof);
 
         // build
+
         const mv_build = mat4.create();
         mat4.translate(mv_build, modelview, pos);
         mat4.scale(mv_build, mv_build, [1.0, height, 1.0]);
         vbo_cube.draw('box', build_textures[map[x][y]], tmatrix, mv_build);
+
+
+        // balconies
+        const bal_height = 0.14;
+        const bal_width = 0.2;
+        const bal_y0 = 1.0;     // begin height
+        const bal_offy = 0.0;   // each box offset
+        const bal_offx = 0.7;
+        for (let side = 0; side < 1; ++side) {
+          for (let cols = 0; cols < 3; ++cols) {
+            for (let rows = 0; rows < 10; ++rows) {
+              //if (rows % 2) continue;
+              const mv_bal = mat4.create();
+              mat4.translate(mv_bal, modelview, [
+                pos[0] - 0.9 + bal_width + bal_offx * cols,
+                bal_y0 + rows * (bal_offy + bal_height * 2),
+                pos[2] + 1.0
+              ]);
+              mat4.scale(mv_bal, mv_bal, [bal_width, bal_height, bal_width]);
+              vbo_cube.draw('box', bal_textures[(side + cols + rows) % bal_textures.length], tmatrix, mv_bal);
+            }
+          }
+        }
+
       }
     }
 
