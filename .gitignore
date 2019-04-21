@@ -2,3 +2,7 @@
 /content-*/
 *.pyc
 SECURE_*
+/image_stealer/png/
+/image_stealer/data/
+/image_stealer/downloaded/
+/image_stealer/nes_15to64_color3_aspect05/

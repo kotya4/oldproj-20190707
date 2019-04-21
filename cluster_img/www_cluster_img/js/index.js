@@ -1,44 +1,51 @@
 window.onload = () => {
-  const ctx = document.getElementById('canvas').getContext('2d');
-  ctx.fillStyle = 'red';
-  ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+  //const ctx = document.getElementById('canvas').getContext('2d');
+  //ctx.fillStyle = 'red';
+  //ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
 
-
+  let files_num = 0;
+  let files = null;
   document.getElementById('input-file').addEventListener('change', function() {
-    console.log(this.files);
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      const img = new Image();
-      img.src = reader.result;
-      const name = this.files[0].name;
-      img.onload = () => process_img(img, name.substr(0, name.lastIndexOf('.')));
+    files = this.files;
+    files_num = this.files.length;
+    let i = 0;
+    for (file of this.files) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const img = new Image();
+        img.src = reader.result;
+        img.onload = () => process_img(img, '', ++i);
+      }
+      reader.readAsDataURL(file);
     }
-    reader.readAsDataURL(this.files[0]);
   }, false);
 
 
-  function process_img(img, name = 'filename') {
+  function process_img(img, name = 'filename', index = -1) {
+    name = files[index - 1].name.substr(0, files[index - 1].name.lastIndexOf('.'));
+    console.log('processing ' + name + ' (' + index + ' of ' + files_num + ')');
+    const ctx = document.createElement('canvas').getContext('2d');
     ctx.canvas.width = img.width;
     ctx.canvas.height = img.height;
     ctx.drawImage(img, 0, 0);
     const clusters = clusterize(ctx);
-    document.getElementById('download').onclick = () => {
-      const zip = new JSZip();
-      const vctx = document.createElement('canvas').getContext('2d');
-      ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-      ctx.drawImage(img, 0, 0);
-      clusters.forEach((e, i) => {
-        vctx.canvas.width = 1 + e.x_max - e.x_min;
-        vctx.canvas.height = 1 + e.y_max - e.y_min;
-        vctx.drawImage(ctx.canvas,
-                       e.x_min, e.y_min,
-                       vctx.canvas.width, vctx.canvas.height,
-                       0, 0,
-                       vctx.canvas.width, vctx.canvas.height);
-        zip.file(name + '-' + i + '.png', atob(vctx.canvas.toDataURL().substr(22)), { binary: true });
-      });
-      zip.generateAsync({ type: 'base64' }).then(e => location.href = 'data:application/zip;base64,' + e);
-    }
+    //document.getElementById('download').onclick = () => {
+    const zip = new JSZip();
+    const vctx = document.createElement('canvas').getContext('2d');
+    ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+    ctx.drawImage(img, 0, 0);
+    clusters.forEach((e, i) => {
+      vctx.canvas.width = 1 + e.x_max - e.x_min;
+      vctx.canvas.height = 1 + e.y_max - e.y_min;
+      vctx.drawImage(ctx.canvas,
+                     e.x_min, e.y_min,
+                     vctx.canvas.width, vctx.canvas.height,
+                     0, 0,
+                     vctx.canvas.width, vctx.canvas.height);
+      zip.file(name + '-' + i + '.png', atob(vctx.canvas.toDataURL().substr(22)), { binary: true });
+    });
+    zip.generateAsync({ type: 'base64' }).then(e => location.href = 'data:application/zip;base64,' + e);
+    //}
   }
 
 
@@ -99,8 +106,8 @@ window.onload = () => {
         if (y < clusters[m_].y_min) clusters[m_].y_min = y;
 
         // draw
-        ctx.fillStyle = COLORS[m_ % COLORS.length];
-        ctx.fillRect(x, y, 1, 1);
+        //ctx.fillStyle = COLORS[m_ % COLORS.length];
+        //ctx.fillRect(x, y, 1, 1);
       }
     }
 
