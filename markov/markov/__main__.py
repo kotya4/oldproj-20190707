@@ -3,50 +3,110 @@ import re
 import json
 
 
-print('.creates dictionary.')
-raw = []
-dic = []
-with open('bible.txt', 'r', encoding='utf8') as f:
-    for line_i, line in enumerate(f):
-        if line_i % 500 == 0:
-            print('  ' + str(line_i) + ' of ???')
-        if line[0].isdigit():
-            for i in range(len(line)):
-                if not line[i].isdigit():
-                    break;
-            s = re.sub('[^0-9a-zA-Zа-яА-Я]+', ' ', line[i:]).lower().split(' ')
-            s = list(filter(None, s))
-            r = []
-            for w in s:
-                for i in range(len(dic)):
-                    if w == dic[i]:
-                        r.append(i)
-                        break
-                r.append(len(dic))
-                dic.append(w)
-            raw.append(r)
+dictionary = []    # list of all words existed in text (no repeat)
+indexed_lines = [] # represends lines as list of indices reffered to disctionary
 
-print('.creates chain.')
-chain = [{ 'next': [], 'amount': 0 }] * len(dic)
-begins_with = []
-for line_i, line in enumerate(raw):
-    if line_i % 500 == 0:
-        print('  ' + str(line_i) + ' of ' + str(len(raw)))
-    if not any(line[0] == e for e in begins_with):
-        begins_with.append(line[0])
+
+# converts line into tuple
+def tuple_of(line):
+    # each "useful" line in input have to have a number in front
+    sub = ''
+    if line[0].isdigit():
+        for i, e in enumerate(line):
+            if not e.isdigit():
+                sub = line[i:]
+                break
+    #  convertes parsed line into tuple
+    if sub:
+        # clears line from non-alphabetic symbols ;
+        # lowers case ;
+        # splits into list ;
+        # removes empty strings from list ;
+        # finally, returns tuple.
+        return tuple(filter(None, re.sub('[^а-яА-ЯёЁ]+', ' ', sub).lower().split(' ')))
+    # if line is empty then returns empty tuple
+    return tuple()
+
+
+# allocates memory for chain list (simple "[{ ... }] * capacity" doesn't work)
+def alloc_chain(capacity):
+    chain = []
+    for i in range(capacity):
+        chain.append({ 'next': [], 'amount': 0 })
+    return chain
+
+
+print('CREATING DICTIONARY ...')
+
+
+with open('bible.txt', 'r', encoding='utf8') as f:
+    for index, line in enumerate(f):
+        # logs process
+        if index % 500 == 0:
+            print('    %d of ???' % ( index, ))
+        # HACK: only first 1000 lines will be proc
+        if index == 1000:
+            break
+        # converts line into indices reffered to disctionary
+        # and pushes new words in dictionary if any found.
+        indexed = []
+        for word in tuple_of(line):
+            found = False
+            for i, w in enumerate(dictionary):
+                # does not update dictionary if word already in there
+                if w == word:
+                    indexed.append(i)
+                    found = True
+                    break
+            if not found:
+                # updates dictionary
+                indexed.append(len(dictionary))
+                dictionary.append(word)
+        # pushes indexed line in list
+        if indexed:
+            indexed_lines.append(indexed)
+
+
+chain = alloc_chain(len(dictionary)) # allocates object list for chain
+first = []                           # list of first indices in lines
+
+
+print('CREATING CHAINS ...')
+
+
+for index, line in enumerate(indexed_lines):
+    # logs process
+    if index % 500 == 0:
+        print('    %d of %d' % ( index, len(indexed_lines), ))
+    # pushes first index from indexed line into "first" if index not already exists there
+    if not any(line[0] == e for e in first):
+        first.append(line[0])
+    # updates indices of field "next"
     for i, word in enumerate(line):
-        next_index = line[i + 1] if i + 1 < len(line) else None
+        next_word = line[i + 1] if i + 1 < len(line) else None
         found = False
         for e in chain[word]['next']:
-            if e[0] == next_index:
+            if e[0] == next_word:
+                # increments "mention" (second element of chain field "next") if index of
+                # "next index" already existed in "next".
                 e[1] += 1
                 found = True
                 break
+        # pushes "next_word" with "mention" = 1 if index was not found in "next"
         if not found:
-            chain[word]['next'].append([next_index, 1])
+            chain[word]['next'].append([next_word, 1])
+        # incs amount of mentions anyway (amount of mentions in element of chain)
         chain[word]['amount'] += 1
 
-print('.saves to file.')
-j = { 'dictionary': dic, 'chain': chain, 'begins_with': begins_with }
+
+j = { 'dictionary': dictionary, 'chain': chain, 'first': first } # creates json with data
+
+
+print('SAVING TO FILE ...')
+
+
 with open('output.json', 'w') as f:
     json.dump(j, f)
+
+
+print('DONE.')

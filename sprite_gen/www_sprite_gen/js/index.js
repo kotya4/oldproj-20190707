@@ -82,19 +82,19 @@ function onload() {
     z = Math.random() * 100;
 
     const opt = {
-      perlin_scale: Math.random() * 0.5,
+      perlin_scale: Math.random() * 0.1,
       alpha: 0.1,
       radius_x: 64,
-      radius_y: 70,
+      radius_y: 64,
       color_shift: 0,//Math.random() * 100 | 0,
-      color_depth: Math.random() * 2 | 0 + 2,
+      color_depth: Math.random() * 5 | 0 + 2,
       z,
-      mirror_x: Math.random() > 0.1,
-      mirror_y: Math.random() > 0.5,
+      mirror_x: true,//Math.random() > 0.1,
+      mirror_y: false,//Math.random() > 0.5,
     };
 
     const tiles = [];
-    for (let k = 0; k < 1 + Math.random() * 10 | 0; ++k) {
+    for (let k = 0; k < 1 + Math.random() * 100 | 0; ++k) {
       const c = create_canvas();
       draw_perlin_noise(Object.assign(opt, { z: z + k, ctx: c }));
       tiles.push({
