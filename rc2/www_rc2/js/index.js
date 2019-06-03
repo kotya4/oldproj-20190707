@@ -1,5 +1,7 @@
 
-function onload() {
+include('www_rc2/js/', [
+
+]).then(_ => {
 
   const wrapper = document.getElementsByClassName('wrapper')[0];
   const cvs = document.createElement('canvas');
@@ -49,7 +51,7 @@ function onload() {
     rot_speed: 0.1
   };
 
-  const minimap_scale = 10;
+  const minimap_scale = 2;
 
   function draw_ray(ox, oy, x, y) {
     const grad = ctx.createLinearGradient(oy * minimap_scale, ox * minimap_scale, y * minimap_scale, x  * minimap_scale);
@@ -187,11 +189,14 @@ function onload() {
   const TWO_PI = 2 * Math.PI;
 
   function castRays() {
-    for (let ray_angle = 0; ray_angle < fov; ray_angle += angle_step)
-      cast_single_ray(player.rot + ray_angle - fov / 2, player.x, player.y);
+    let index = 0;
+    for (let ray_angle = 0; ray_angle < fov; ray_angle += angle_step) {
+      cast_single_ray(index, player.rot + ray_angle - fov / 2, player.x, player.y);
+      index ++;
+    }
   }
 
-  function cast_single_ray(angle, from_x, from_y, from_dist = 0) {
+  function cast_single_ray(index, angle, from_x, from_y, from_dist = 0) {
     if ((angle %= TWO_PI) < 0) angle += TWO_PI;
 
     const right = angle > TWO_PI * 0.75 || angle < TWO_PI * 0.25;
@@ -285,6 +290,31 @@ function onload() {
 
     if (dist) {
       draw_ray(from_x, from_y, hit_x, hit_y);
+
+      //dist = Math.sqrt(dist) * Math.cos(player.rot - angle);
+
+      const viewDist = 100;
+      const stripWidth = 2;
+
+
+      var height = Math.round(viewDist / dist);
+      var width = height * stripWidth;
+      var top = Math.round((ctx.canvas.height - height) / 2);
+
+      const c = 256 / dist;
+      ctx.fillStyle = `rgba(${c},${c},${c})`;
+      ctx.fillRect(index * stripWidth, top, width, height);
+
+      //console.log(height);
+
+      /*
+      var dwx = xWallHit - player.x;
+      var dwy = yWallHit - player.y;
+
+      var wallDist = dwx*dwx + dwy*dwy;
+      strip.style.zIndex = -Math.floor(wallDist*1000);
+      */
+
       /*
       x = hit_wall_x;
       y = hit_wall_y;
@@ -310,26 +340,4 @@ function onload() {
 
   }, 50);
 
-}
-
-/*
- * Loader
- */
-((path, a) => {
-  function loadjs(src, async = true) {
-    return new Promise((res, rej) =>
-      document.head.appendChild(Object.assign(document.createElement('script'), {
-        src,
-        async,
-        onload: _ => res(src),
-        onerror: _ => rej(src)
-      }))
-    )
-  }
-  Promise.all(a.map(e => loadjs(path + e)))
-    .then(_ => window.addEventListener('load', onload))
-    .catch(src => console.log(`File "${src}" not loaded`));
-})
-('www_rc2/js/', [
-  'map-encoder.js',
-]);
+});
