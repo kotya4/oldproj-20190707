@@ -3,18 +3,18 @@ include('www_rc2/js/', [
 
 ]).then(_ => {
 
-  const wrapper = document.getElementsByClassName('wrapper')[0];
-  const cvs = document.createElement('canvas');
-  cvs.width = 320;
-  cvs.height = 240;
-  wrapper.appendChild(cvs);
-  const ctx = cvs.getContext('2d');
+
+  const ctx = document.createElement('canvas').getContext('2d');
+  ctx.canvas.width = 320;
+  ctx.canvas.height = 240;
+  document.getElementsByClassName('wrapper')[0].appendChild(ctx.canvas);
 
   const keys = {};
   window.onkeyup = e => keys[e.keyCode] = false;
   window.onkeydown = e => keys[e.keyCode] = true;
 
-  let map = [
+
+  const map = [
     [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
     [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
     [1,0,0,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
@@ -24,9 +24,9 @@ include('www_rc2/js/', [
     [1,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1],
     [1,0,0,1,0,1,0,3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
     [1,0,0,1,0,1,0,3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
-    [1,0,0,1,0,1,0,3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
-    [1,0,0,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1],
-    [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+    [0,0,0,1,0,1,0,3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+    [0,0,0,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,0],
+    [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
     [1,0,0,0,0,0,0,0,0,1,1,1,0,0,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
     [1,0,0,0,0,0,0,0,0,1,1,1,0,0,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
     [1,0,0,0,0,0,0,0,0,1,1,1,0,0,1,1,1,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1],
@@ -41,9 +41,22 @@ include('www_rc2/js/', [
     [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
   ];
 
+
+  /*
+  const map = [
+    '##  ### # ###',
+    '#       #   #',
+    '# ## #    # #',
+    '     #  # #  ',
+    '#   ##  #   #',
+    '#         # #',
+    '##  ### # ###',
+  ].map(e => e.split('').map(e => e === ' ' ? 0 : 1));
+  */
+
   const player = {
-    x: 10,
-    y: 10,
+    x: 4,
+    y: 3,
     dir: 0,
     rot: 0,
     speed: 0,
@@ -51,7 +64,7 @@ include('www_rc2/js/', [
     rot_speed: 0.1
   };
 
-  const minimap_scale = 2;
+  const minimap_scale = 4;
 
   function draw_ray(ox, oy, x, y) {
     const grad = ctx.createLinearGradient(oy * minimap_scale, ox * minimap_scale, y * minimap_scale, x  * minimap_scale);
@@ -73,7 +86,7 @@ include('www_rc2/js/', [
     }
 
     ctx.fillStyle = 'white';
-    ctx.fillRect(player.y * minimap_scale - 3, player.x * minimap_scale - 3, 6, 6);
+    ctx.fillRect(player.y * minimap_scale - minimap_scale / 2, player.x * minimap_scale - minimap_scale / 2, minimap_scale, minimap_scale);
 
     ctx.strokeStyle = 'blue';
     ctx.beginPath();
@@ -108,24 +121,29 @@ include('www_rc2/js/', [
     }
   }
 
+  /*
   function is_out_of_border(x, y) {
     return y < 0 || y >= map[0].length || x < 0 || x >= map.length;
   }
+  */
 
-  function is_block(x, y) {
-    return y < 0 || y >= map[0].length || x < 0 || x >= map.length || map[x][y];
+  function is_solid(x, y) {
+    if (x < 0 || y < 0) return true;
+    x %= map.length;
+    y %= map[0].length;
+    return map[x][y];
   }
 
   function check_collision(ox, oy, nx, ny, radius) {
     const x = ~~nx;
     const y = ~~ny;
 
-    if (is_block(x, y)) return { x: ox, y: oy };
+    if (is_solid(x, y)) return { x: ox, y: oy };
 
-    const block_t = is_block(x + 0, y - 1);
-    const block_b = is_block(x + 0, y + 1);
-    const block_l = is_block(x - 1, y + 0);
-    const block_r = is_block(x + 1, y + 0);
+    const block_t = is_solid(x + 0, y - 1);
+    const block_b = is_solid(x + 0, y + 1);
+    const block_l = is_solid(x - 1, y + 0);
+    const block_r = is_solid(x + 1, y + 0);
 
     if (block_t && 0 - y + ny < radius) ny = 0 + y + radius;
     if (block_b && 1 + y - ny < radius) ny = 1 + y - radius;
@@ -134,48 +152,40 @@ include('www_rc2/js/', [
 
     const r2 = radius * radius;
 
-    if (!(block_t && block_l) && is_block(x - 1, y - 1)) { // is tile to the top-left a wall
+    if (!(block_t && block_l) && is_solid(x - 1, y - 1)) { // is tile to the top-left a wall
       const dx = nx - (x + 0);
       const dy = ny - (y + 0);
       const qx = dx * dx;
       const qy = dy * dy;
-      if (qx + qy < r2) {
-        if (qx > qy) nx = x + radius;
-        else ny = y + radius;
-      }
+      if (qx + qy < r2)
+        if (qx > qy) nx = x + radius; else ny = y + radius;
     }
 
-    if (!(block_t && block_r) && is_block(x + 1, y - 1)) { // is tile to the top-right a wall
+    if (!(block_t && block_r) && is_solid(x + 1, y - 1)) { // is tile to the top-right a wall
       const dx = nx - (x + 1);
       const dy = ny - (y + 0);
       const qx = dx * dx;
       const qy = dy * dy;
-      if (qx + qy < r2) {
-        if (qx > qy) nx = x + 1 - radius;
-        else ny = y + radius;
-      }
+      if (qx + qy < r2)
+        if (qx > qy) nx = x + 1 - radius; else ny = y + radius;
     }
 
-    if (!(block_b && block_b) && is_block(x - 1, y + 1)) { // is tile to the bottom-left a wall
+    if (!(block_b && block_b) && is_solid(x - 1, y + 1)) { // is tile to the bottom-left a wall
       const dx = nx - (x + 0);
       const dy = ny - (y + 1);
       const qx = dx * dx;
       const qy = dy * dy;
-      if (qx + qy < r2) {
-        if (qx > qy) nx = x + radius;
-        else ny = y + 1 - radius;
-      }
+      if (qx + qy < r2)
+        if (qx > qy) nx = x + radius; else ny = y + 1 - radius;
     }
 
-    if (!(block_b && block_r) && is_block(x + 1, y + 1)) { // is tile to the bottom-right a wall
+    if (!(block_b && block_r) && is_solid(x + 1, y + 1)) { // is tile to the bottom-right a wall
       const dx = nx - (x + 1);
       const dy = ny - (y + 1);
       const qx = dx * dx;
       const qy = dy * dy;
-      if (qx + qy < r2) {
-        if (qx > qy) nx = x + 1 - radius;
-        else ny = y + 1 - radius;
-      }
+      if (qx + qy < r2)
+        if (qx > qy) nx = x + 1 - radius; else ny = y + 1 - radius;
     }
 
     return { x: nx, y: ny };
@@ -183,20 +193,44 @@ include('www_rc2/js/', [
 
 
 
-  const fov = Math.PI / 4;
-  const rays_number = 50;
-  const angle_step = fov / rays_number;
+  const fov = Math.PI / 2.5;
   const TWO_PI = 2 * Math.PI;
+  const max_dist = 100;
 
-  function castRays() {
-    let index = 0;
-    for (let ray_angle = 0; ray_angle < fov; ray_angle += angle_step) {
-      cast_single_ray(index, player.rot + ray_angle - fov / 2, player.x, player.y);
-      index ++;
+
+  function draw_scene(width, height, strip_width = 1) {
+
+    const rays_number = width / strip_width;
+    const angle_step = fov / rays_number;
+    let ray_angle = -(fov / 2);
+
+    for (let i = 0; i < rays_number; ++i) {
+
+
+      ray_angle += angle_step;
+
+
+      const { dist } = cast_ray(player.rot + ray_angle, player.x, player.y);
+
+      if (dist) {
+        const sdist = Math.sqrt(dist) * Math.cos(ray_angle); // straight distance
+
+        const strip_height = height / sdist;
+
+        const left = width - strip_width * i;
+        const top = (height - strip_height) / 2;
+
+        const c = (256 / sdist) << 1;
+
+        ctx.fillStyle = `rgb(${c},${c},${c})`;
+        ctx.fillRect(left, top, -strip_width, strip_height);
+
+      }
+
     }
   }
 
-  function cast_single_ray(index, angle, from_x, from_y, from_dist = 0) {
+  function cast_ray(angle, from_x, from_y) {
     if ((angle %= TWO_PI) < 0) angle += TWO_PI;
 
     const right = angle > TWO_PI * 0.75 || angle < TWO_PI * 0.25;
@@ -216,7 +250,7 @@ include('www_rc2/js/', [
     let horizontal = false;
     let hit_x = 0;
     let hit_y = 0;
-    let dist = from_dist;
+    let dist = 0;
     let tex_x;
     let x;
     let y;
@@ -231,11 +265,14 @@ include('www_rc2/js/', [
 
     x = right ? Math.ceil(from_x) : Math.floor(from_x);
     y = from_y + (x - from_x) * vslope;
-    while (!is_out_of_border(x, y)) {
+
+
+
+    for (let i = 0; i < max_dist; ++i) {
       const wall_x = ~~(x - !right);
       const wall_y = ~~y;
 
-      if (is_block(wall_x, wall_y)) {
+      if (is_solid(wall_x, wall_y)) {
         const dist_x = x - from_x;
         const dist_y = y - from_y;
         dist = dist_x * dist_x + dist_y * dist_y;
@@ -260,11 +297,13 @@ include('www_rc2/js/', [
 
     y = up ? Math.floor(from_y) : Math.ceil(from_y);
     x = from_x + (y - from_y) * hslope;
-    while (!is_out_of_border(x, y)) {
+
+
+    for (let i = 0; i < max_dist; ++i) {
       const wall_y = ~~(y - up);
       const wall_x = ~~x;
 
-      if (is_block(wall_x, wall_y)) {
+      if (is_solid(wall_x, wall_y)) {
         const dist_x = x - from_x;
         const dist_y = y - from_y;
         const blockDist = dist_x * dist_x + dist_y * dist_y;
@@ -288,55 +327,23 @@ include('www_rc2/js/', [
       y += hdy;
     }
 
-    if (dist) {
-      draw_ray(from_x, from_y, hit_x, hit_y);
+    return {
+      dist,
 
-      //dist = Math.sqrt(dist) * Math.cos(player.rot - angle);
-
-      const viewDist = 100;
-      const stripWidth = 2;
-
-
-      var height = Math.round(viewDist / dist);
-      var width = height * stripWidth;
-      var top = Math.round((ctx.canvas.height - height) / 2);
-
-      const c = 256 / dist;
-      ctx.fillStyle = `rgba(${c},${c},${c})`;
-      ctx.fillRect(index * stripWidth, top, width, height);
-
-      //console.log(height);
-
-      /*
-      var dwx = xWallHit - player.x;
-      var dwy = yWallHit - player.y;
-
-      var wallDist = dwx*dwx + dwy*dwy;
-      strip.style.zIndex = -Math.floor(wallDist*1000);
-      */
-
-      /*
-      x = hit_wall_x;
-      y = hit_wall_y;
-      if (!is_out_of_border(x, y) && map[x][y] === 3) {
-         // TODO: нужно правильно рассчитать дистанцию, сложить старую дистанцию с новой + дистанция от hit_wall до next_wall
-        cast_single_ray(angle, next_wall_x, next_wall_y, dist);
-      }
-      */
     }
-
-
-
   }
 
   setInterval(() => {
-    ctx.fillStyle = 'black';
-    ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+
+
+    ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+
+    draw_scene(ctx.canvas.width, ctx.canvas.height);
 
     draw_minimap();
+
     keyboard();
 
-    castRays(player.x, player.y);
 
   }, 50);
 
